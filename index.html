@@ -2,232 +2,131 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1a1a1a">
-    <title>Gerador de Sermões Pro v2</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gerador de Sermões Pro v3</title>
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0b0b">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        :root {
-            --bg-dark: #0d0d0d; --bg-card: #1a1a1a; --bg-input: #252525;
-            --primary: #f5b041; --primary-dark: #d4941c; --accent: #e74c3c;
-            --text-light: #f0f0f0; --text-muted: #888; --border: #333;
+        :root { --bg: #0b0b0b; --gold: #c5a059; --card: #161616; --text: #f0f0f0; --input: #252525; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; -webkit-font-smoothing: antialiased; }
+
+        .container { max-width: 600px; margin: auto; background: var(--card); border: 1px solid var(--gold); border-radius: 20px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); position: relative; box-sizing: border-box; }
+
+        h1 { color: var(--gold); text-align: center; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+
+        label { display: block; color: #888; font-size: 11px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px; }
+
+        textarea, select {
+            width: 100%; padding: 16px; background: var(--input); color: white;
+            border: 1px solid #444; border-radius: 12px; margin-bottom: 15px;
+            font-size: 17px; outline: none; box-sizing: border-box; resize: none;
+            font-family: 'Segoe UI', sans-serif;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background: var(--bg-dark); 
-            color: var(--text-light); 
-            padding: 20px; 
-            display: flex; 
-            justify-content: center; 
-            font-family: 'Lato', sans-serif;
-            min-height: 100vh;
-        }
-        .card { 
-            background: var(--bg-card); 
-            padding: 30px; 
-            border-radius: 20px; 
-            width: 100%; 
-            max-width: 800px; 
-            border: 1px solid var(--border); 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
-            position: relative;
-            height: fit-content;
-        }
-        .card::before { 
-            content: ''; 
-            position: absolute; 
-            top: 0; left: 0; right: 0; 
-            height: 4px; 
-            background: linear-gradient(90deg, var(--primary), var(--accent)); 
-            border-radius: 20px 20px 0 0; 
-        }
-        h1 { 
-            color: var(--primary); 
-            text-align: center; 
-            margin-bottom: 6px; 
-            letter-spacing: 3px; 
-            font-size: 22px; 
-            font-family: 'Cinzel', serif;
-            font-weight: 700;
-        }
-        .subtitle {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 11px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 28px;
-        }
-        label { 
-            display: block; 
-            color: var(--text-muted); 
-            margin-bottom: 8px; 
-            font-size: 11px; 
-            text-transform: uppercase; 
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-        textarea, select { 
-            width: 100%; 
-            padding: 14px 16px; 
-            margin-bottom: 20px; 
-            border-radius: 10px; 
-            border: 1px solid var(--border); 
-            background: var(--bg-input); 
-            color: #fff; 
-            font-size: 15px; 
-            outline: none; 
-            font-family: 'Lato', sans-serif;
-            transition: border-color 0.2s;
-        }
-        textarea:focus, select:focus { border-color: var(--primary); }
+        textarea:focus, select:focus { border-color: var(--gold); }
         select option { background: #252525; }
-        .btns { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-            gap: 10px; 
-            margin-bottom: 0;
-        }
-        button { 
-            padding: 14px; 
-            border-radius: 12px; 
-            border: none; 
-            cursor: pointer; 
-            font-weight: 700; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 8px; 
-            transition: all 0.25s; 
-            text-transform: uppercase; 
-            font-size: 12px;
-            font-family: 'Lato', sans-serif;
-            letter-spacing: 0.5px;
-        }
-        .btn-gerar { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #000; }
-        .btn-hist { background: #8e44ad; color: #fff; }
-        .btn-pdf { background: #27ae60; color: #fff; }
-        .btn-bd { background: #2980b9; color: #fff; }
-        button:hover { opacity: 0.85; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        button:active { transform: translateY(0); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        #saida { 
-            margin-top: 24px; 
-            padding: 24px; 
-            background: linear-gradient(145deg, #1c1c1c, #141414); 
-            border-radius: 14px; 
-            line-height: 1.85; 
-            border: 1px solid var(--border); 
-            min-height: 160px;
-            font-size: 15px;
+        .btn-gerar {
+            width: 100%; padding: 20px; background: var(--gold); color: #000;
+            border: none; border-radius: 12px; font-weight: bold; cursor: pointer;
+            font-size: 17px; text-transform: uppercase;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            transition: 0.3s; margin-bottom: 12px;
         }
-        #saida h2 {
-            font-family: 'Cinzel', serif;
-            color: var(--primary);
-            margin-bottom: 8px;
-            font-size: 18px;
-        }
-        #saida hr { border-color: #333; margin: 14px 0; }
+        .btn-gerar:active { transform: scale(0.98); }
+        .btn-gerar:disabled { background: #444; color: #888; cursor: not-allowed; }
 
-        /* Streaming cursor */
-        .cursor { 
-            display: inline-block; 
-            width: 2px; 
-            height: 1em; 
-            background: var(--primary); 
-            margin-left: 2px; 
-            vertical-align: middle;
-            animation: blink 0.7s steps(1) infinite;
+        .btns-secundarios {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 5px;
         }
-        @keyframes blink { 0%,100% { opacity:1 } 50% { opacity:0 } }
+        .btn-sec {
+            padding: 14px; border: none; border-radius: 12px; cursor: pointer;
+            font-weight: bold; font-size: 13px; text-transform: uppercase;
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            transition: 0.2s;
+        }
+        .btn-sec:active { transform: scale(0.97); }
+        .btn-salvar  { background: #2980b9; color: #fff; }
+        .btn-hist    { background: #8e44ad; color: #fff; }
+        .btn-pdf     { background: #27ae60; color: #fff; }
 
-        /* Modal */
-        #modalHistorico { 
-            display: none; 
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.92); 
-            z-index: 1000; 
-            padding: 20px; 
-            overflow-y: auto; 
-            backdrop-filter: blur(6px); 
+        #roteiro {
+            margin-top: 20px; padding: 20px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px; border-left: 5px solid var(--gold);
+            line-height: 1.85; font-size: 18px; color: #ddd;
+            white-space: pre-wrap; min-height: 80px;
         }
-        .modal-inner { max-width: 700px; margin: 40px auto; }
-        .item-lista { 
-            background: #252525; 
-            padding: 16px 18px; 
-            border-radius: 12px; 
-            margin-bottom: 10px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border: 1px solid #333;
-            transition: border-color 0.2s;
-        }
-        .item-lista:hover { border-color: var(--primary); }
-        .item-lista strong { font-size: 14px; }
-        .item-lista .item-date { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-        .btn-excluir { 
-            background: var(--accent); 
-            color: white; 
-            padding: 8px 12px; 
-            border-radius: 8px; 
-            font-size: 12px;
-        }
-        .btn-abrir {
-            background: var(--primary); 
-            color: #000; 
-            padding: 8px 14px; 
-            border-radius: 8px;
-            font-size: 12px;
-        }
-        .spinner { 
-            width: 36px; height: 36px;
-            border: 3px solid rgba(245,176,65,0.2);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 14px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        #roteiro b { color: var(--gold); font-weight: 700; }
+        #roteiro h2 { color: var(--gold); margin-bottom: 6px; font-size: 20px; }
+        #roteiro hr { border-top: 1px solid #333; margin: 16px 0; }
 
-        .tag-ia {
-            display: inline-block;
-            background: rgba(245,176,65,0.12);
-            color: var(--primary);
-            border: 1px solid rgba(245,176,65,0.25);
-            border-radius: 20px;
-            font-size: 10px;
-            padding: 2px 10px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 22px;
-            font-weight: 700;
+        .settings-btn { position: absolute; top: 20px; right: 20px; color: var(--gold); cursor: pointer; font-size: 20px; z-index: 10; }
+        #config-panel {
+            display: none; background: #222; padding: 15px; border-radius: 10px;
+            margin-bottom: 15px; border: 1px dashed var(--gold); animation: fadeIn 0.3s;
         }
+        #config-panel label { color: var(--gold); }
 
-        @media(max-width: 500px) {
-            .card { padding: 20px; }
-            h1 { font-size: 18px; }
-            .btns { grid-template-columns: 1fr 1fr; }
+        #modalHistorico {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.94); z-index: 1000;
+            padding: 20px; overflow-y: auto; backdrop-filter: blur(6px);
+        }
+        .modal-inner { max-width: 600px; margin: 30px auto; }
+        .item-lista {
+            background: #1a1a1a; padding: 16px 18px; border-radius: 12px;
+            margin-bottom: 10px; display: flex; justify-content: space-between;
+            align-items: center; border: 1px solid #333; transition: 0.2s;
+        }
+        .item-lista:hover { border-color: var(--gold); }
+        .item-lista strong { color: var(--gold); font-size: 15px; }
+        .item-data { font-size: 11px; color: #666; margin-top: 2px; }
+        .btn-abrir  { background: var(--gold); color: #000; padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .btn-excluir { background: #e74c3c; color: white; padding: 8px 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 12px; }
+
+        .history-section { margin-top: 30px; max-width: 600px; margin-left: auto; margin-right: auto; border-top: 1px solid #333; padding-top: 20px; }
+        .history-item { background: #1a1a1a; padding: 16px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; cursor: pointer; transition: 0.2s; font-size: 15px; }
+        .history-item:hover { border-color: var(--gold); }
+        .badge { background: var(--gold); color: black; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: bold; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media(max-width: 420px) {
+            h1 { font-size: 1.4rem; }
+            .btns-secundarios { grid-template-columns: 1fr 1fr; }
+            .btn-pdf { grid-column: span 2; }
         }
     </style>
 </head>
-<body>
+<body onload="inicializarApp()">
 
-<div class="card">
-    <h1>⛪ GERADOR DE SERMÕES</h1>
-    <p class="subtitle">Powered by Inteligência Artificial</p>
-    <div style="text-align:center"><span class="tag-ia">✦ Claude AI</span></div>
+<div class="container">
+    <i class="fa-solid fa-cog settings-btn" onclick="toggleConfig()" title="Configurações da API"></i>
+
+    <h1><i class="fa-solid fa-bible"></i> Sermões Pro</h1>
+    <p style="text-align:center; font-size:14px; color:#888; margin-bottom:20px;">Pregador: Cicero Daniel</p>
+
+    <!-- Painel de configuração -->
+    <div id="config-panel">
+        <label>Chave API Gemini:</label>
+        <input type="password" id="api-key-input"
+               style="width:100%; background:#000; color:#00ff00; border:1px solid #444; padding:12px; border-radius:8px; margin-top:5px; box-sizing:border-box; font-size:14px;"
+               placeholder="Cole sua chave do Google AI Studio aqui...">
+        <button onclick="saveKey()"
+                style="margin-top:10px; width:100%; background:var(--gold); border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:15px;">
+            SALVAR CHAVE
+        </button>
+        <p style="color:#666; font-size:11px; margin-top:8px; text-align:center;">
+            Chave gratuita em <strong style="color:var(--gold)">aistudio.google.com</strong>
+        </p>
+    </div>
 
     <label>Tema ou Versículo</label>
     <textarea id="tema" placeholder="Sobre o que vamos pregar hoje? Ex: Fé que move montanhas (Mateus 17:20)" rows="3"></textarea>
-    
+
     <label>Estilo de Referência</label>
     <select id="estiloReferencia">
         <option value="Pr. Cláudio Duarte">Pr. Cláudio Duarte</option>
@@ -236,251 +135,290 @@
         <option value="Miss. Edmeia Williams">Miss. Edmeia Williams</option>
     </select>
 
-    <div class="btns">
-        <button class="btn-gerar" id="btnGerar" onclick="gerarSermao()">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> GERAR
-        </button>
-        <button class="btn-bd" onclick="salvarNoBanco()">
+    <button id="btn-main" class="btn-gerar" onclick="gerarSermao()">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> GERAR SERMÃO
+    </button>
+
+    <div class="btns-secundarios">
+        <button class="btn-sec btn-salvar" onclick="salvarNoBanco()">
             <i class="fa-solid fa-cloud-arrow-up"></i> SALVAR
         </button>
-        <button class="btn-hist" onclick="abrirHistorico()">
+        <button class="btn-sec btn-hist" onclick="abrirHistorico()">
             <i class="fa-solid fa-clock-rotate-left"></i> HISTÓRICO
         </button>
-        <button class="btn-pdf" onclick="baixarPDF()">
+        <button class="btn-sec btn-pdf" onclick="baixarPDF()">
             <i class="fa-solid fa-file-pdf"></i> PDF
         </button>
     </div>
-    
-    <div id="saida">
-        <p style="text-align:center; color:var(--text-muted); padding: 30px 0;">
-            <i class="fa-solid fa-dove" style="font-size:28px; opacity:0.3; display:block; margin-bottom:12px;"></i>
-            O rascunho do sermão aparecerá aqui após clicar em Gerar.
-        </p>
+
+    <div id="roteiro">
+        <div style="text-align:center; color:#555; padding:20px 0;">
+            <i class="fa-solid fa-dove" style="font-size:28px; display:block; margin-bottom:10px; opacity:0.4;"></i>
+            O sermão gerado aparecerá aqui...
+        </div>
     </div>
 </div>
 
-<!-- Modal Histórico -->
+<!-- Histórico local -->
+<div class="history-section">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <span style="color:var(--gold); font-weight:bold;">
+            <i class="fa-solid fa-clock-rotate-left"></i> SALVOS RECENTEMENTE
+        </span>
+        <button onclick="limparHistorico()" style="background:none; border:none; color:#ff6b6b; cursor:pointer; font-size:12px;">LIMPAR</button>
+    </div>
+    <div id="lista-historico"></div>
+</div>
+
+<!-- Modal histórico nuvem -->
 <div id="modalHistorico">
     <div class="modal-inner">
-        <button style="background:var(--accent); color:#fff; margin-bottom:20px; width:120px;" 
-                onclick="document.getElementById('modalHistorico').style.display='none'">
+        <button onclick="document.getElementById('modalHistorico').style.display='none'"
+                style="background:#e74c3c; color:#fff; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-weight:bold; margin-bottom:20px;">
             <i class="fa-solid fa-xmark"></i> FECHAR
         </button>
-        <h2 style="color:var(--primary); margin-bottom:20px; font-family:'Cinzel',serif; letter-spacing:2px;">
-            Histórico de Mensagens
-        </h2>
+        <h2 style="color:var(--gold); margin-bottom:20px; letter-spacing:2px;">Histórico na Nuvem</h2>
         <div id="listaSermoes"></div>
     </div>
 </div>
 
 <script>
-    // ══════════════════════════════════════════════
-    //  CONFIGURAÇÕES
-    // ══════════════════════════════════════════════
-    const MEU_NOME = "Cicero Daniel";
+    const MEU_NOME    = "Cicero Daniel";
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbwodI-fHJpXAUQknpHb4oSkfxVpxW_7715DiQey6BAPTrSUOAq9W0fFtTTR7stnEKFP/exec";
+    const NOMES_PROIBIDOS = ["Pr. Cláudio Duarte","Cláudio Duarte","Isaias de Oliveira","Hernandes Dias Lopes","Edmeia Williams"];
 
-    // Nomes a substituir no texto gerado
-    const NOMES_PROIBIDOS = ["Pr. Cláudio Duarte", "Cláudio Duarte", "Isaias de Oliveira", 
-                              "Hernandes Dias Lopes", "Edmeia Williams"];
+    let MINHA_CHAVE = localStorage.getItem('sermoespro_key') || "";
 
-    // ══════════════════════════════════════════════
-    //  GERAR SERMÃO — usa API da Anthropic (Claude)
-    // ══════════════════════════════════════════════
+    // ── Init ──
+    function inicializarApp() {
+        atualizarInterfaceHistorico();
+        if (!MINHA_CHAVE) {
+            document.getElementById('roteiro').innerHTML = `
+                <div style="color:orange; text-align:center; padding:20px;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; display:block; margin-bottom:10px;"></i>
+                    Olá, ${MEU_NOME}!<br>Configure sua chave API na engrenagem ⚙️ para começar.
+                </div>`;
+        }
+    }
+
+    // ── Config ──
+    function toggleConfig() {
+        const p = document.getElementById('config-panel');
+        p.style.display = p.style.display === 'block' ? 'none' : 'block';
+        if (p.style.display === 'block' && MINHA_CHAVE) {
+            document.getElementById('api-key-input').value = MINHA_CHAVE;
+        }
+    }
+
+    function saveKey() {
+        const k = document.getElementById('api-key-input').value.trim();
+        if (k) {
+            localStorage.setItem('sermoespro_key', k);
+            MINHA_CHAVE = k;
+            alert("✅ Chave salva com sucesso!");
+            toggleConfig();
+            inicializarApp();
+        } else {
+            alert("Cole uma chave válida!");
+        }
+    }
+
+    // ── Gerar Sermão (Gemini) ──
     async function gerarSermao() {
-        const tema = document.getElementById('tema').value.trim();
+        const tema       = document.getElementById('tema').value.trim();
         const referencia = document.getElementById('estiloReferencia').value;
+        const display    = document.getElementById('roteiro');
+        const btn        = document.getElementById('btn-main');
 
-        if (!tema) return alert("Por favor, digite um tema ou versículo!");
+        if (!MINHA_CHAVE) { alert("Configure sua chave API primeiro!"); toggleConfig(); return; }
+        if (!tema)         { alert("Insira um tema ou versículo!"); return; }
 
-        const btnGerar = document.getElementById('btnGerar');
-        btnGerar.disabled = true;
-        btnGerar.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> GERANDO...';
+        btn.disabled = true;
+        btn.innerHTML = "<i class='fa-solid fa-circle-notch fa-spin'></i> GERANDO SERMÃO...";
+        display.innerHTML = "<div style='text-align:center; padding:30px; color:#888;'><i class='fa-solid fa-circle-notch fa-spin' style='font-size:28px; color:var(--gold);'></i><br><br>Preparando sermão premium...</div>";
 
-        document.getElementById('saida').innerHTML = `
-            <div style="text-align:center; padding:40px 20px;">
-                <div class="spinner"></div>
-                <p style="color:var(--text-muted); font-size:14px;">Preparando sermão com inteligência artificial...</p>
-            </div>`;
+        const instrucao = `Você é um pregador cristão experiente e ungido, com o estilo inspirado em ${referencia}.
+Escreva um sermão completo e poderoso sobre: "${tema}".
+O sermão deve ser assinado por ${MEU_NOME} (não mencione o nome de referência em nenhum momento).
 
-        const prompt = `Você é um pregador cristão experiente e ungido. Escreva um sermão completo e poderoso sobre o tema/versículo: "${tema}".
+Use a seguinte estrutura com estes títulos exatos em negrito:
+**TÍTULO:** (um título impactante e memorável)
+**INTRODUÇÃO:** (contexto bíblico envolvente, 2-3 parágrafos)
+**PONTO 1:** (com versículo bíblico e explicação objetiva)
+**PONTO 2:** (com versículo bíblico e ilustração prática do cotidiano)
+**PONTO 3:** (com versículo bíblico e aplicação concreta para a vida)
+**CONCLUSÃO:** (apelo ao coração com chamado à decisão)
+**Pregador: ${MEU_NOME}**
 
-Escreva no estilo de pregação inspirado em ${referencia}, com linguagem impactante, clara e edificante.
-
-O sermão deve conter:
-1. Título impactante
-2. Introdução envolvente com contexto bíblico
-3. Pelo menos 3 pontos principais com versículos bíblicos
-4. Ilustrações e aplicações práticas
-5. Conclusão com apelo ao coração
-6. Ao final, assine como: Pr. ${MEU_NOME}
-
-Escreva em português brasileiro. Use linguagem que toque o coração das pessoas.`;
+Escreva em português brasileiro. Linguagem clara, impactante e que toque o coração das pessoas.`;
 
         try {
-            const response = await fetch("https://api.anthropic.com/v1/messages", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "anthropic-version": "2023-06-01",
-                    "anthropic-dangerous-direct-browser-access": "true"
-                },
-                body: JSON.stringify({
-                    model: "claude-sonnet-4-20250514",
-                    max_tokens: 2500,
-                    messages: [
-                        { role: "user", content: prompt }
-                    ]
-                })
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${MINHA_CHAVE}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: instrucao }] }] })
             });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error?.message || `Erro HTTP ${response.status}`);
-            }
 
             const data = await response.json();
-            let texto = data.content[0].text;
+            if (data.error) throw new Error(data.error.message);
 
-            // Substituir nomes de referência pelo pregador real
+            let texto = data.candidates[0].content.parts[0].text;
+
+            // Substituir nomes de referência
             NOMES_PROIBIDOS.forEach(nome => {
-                const regex = new RegExp(nome, "gi");
-                texto = texto.replace(regex, MEU_NOME);
+                texto = texto.replace(new RegExp(nome, "gi"), MEU_NOME);
             });
 
-            // Formatar para HTML
-            const textoHTML = texto
-                .split('\n')
-                .map(line => {
-                    if (!line.trim()) return '<br>';
-                    // Títulos e pontos em negrito
-                    if (/^#{1,3}\s/.test(line)) {
-                        return `<h3 style="color:var(--primary); margin:16px 0 8px; font-family:'Cinzel',serif;">${line.replace(/^#{1,3}\s/, '')}</h3>`;
-                    }
-                    if (/^\*\*(.+)\*\*$/.test(line)) {
-                        return `<h3 style="color:var(--primary); margin:14px 0 6px;">${line.replace(/\*\*/g,'')}</h3>`;
-                    }
-                    return `<p style="margin-bottom:8px;">${line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>')}</p>`;
-                })
-                .join('');
+            // Formatar negritos
+            const textoFormatado = texto.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
-            document.getElementById('saida').innerHTML = `
-                <h2>${tema.toUpperCase()}</h2>
-                <p style="color:var(--text-muted); font-size:13px; margin-bottom:6px;">
-                    <i class="fa-solid fa-microphone" style="margin-right:6px;"></i>
-                    Estilo: ${referencia}
-                </p>
-                <hr>
-                <div style="margin-top:16px;">${textoHTML}</div>`;
+            display.innerHTML = `
+                <div style="text-align:center; margin-bottom:16px;">
+                    <h2 style="margin:0; color:var(--gold); font-size:20px; text-transform:uppercase;">${tema}</h2>
+                    <p style="margin:6px 0 0; font-size:13px; color:#888;">
+                        Pregador: ${MEU_NOME} &nbsp;|&nbsp; Estilo: ${referencia}
+                    </p>
+                </div>
+                <hr style="border-top:1px solid #333; margin-bottom:16px;">
+                ${textoFormatado}`;
+
+            salvarNoHistorico(tema.toUpperCase(), display.innerHTML);
 
         } catch (e) {
-            console.error("Erro:", e);
-            document.getElementById('saida').innerHTML = `
-                <div style="text-align:center; padding:30px;">
-                    <i class="fa-solid fa-triangle-exclamation" style="color:var(--accent); font-size:28px; margin-bottom:12px; display:block;"></i>
-                    <p style="color:var(--accent); font-weight:bold;">Erro ao gerar sermão</p>
-                    <p style="color:var(--text-muted); font-size:13px; margin-top:8px;">${e.message}</p>
+            console.error(e);
+            display.innerHTML = `
+                <div style="text-align:center; padding:20px; color:#e74c3c;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; display:block; margin-bottom:10px;"></i>
+                    <b>Erro na conexão</b><br>
+                    <span style="font-size:13px; color:#888;">${e.message}</span><br><br>
+                    <span style="font-size:12px; color:#666;">Verifique sua chave API ⚙️ ou conexão com a internet.</span>
                 </div>`;
         } finally {
-            btnGerar.disabled = false;
-            btnGerar.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> GERAR';
+            btn.disabled = false;
+            btn.innerHTML = "<i class='fa-solid fa-wand-magic-sparkles'></i> GERAR SERMÃO";
         }
     }
 
-    // ══════════════════════════════════════════════
-    //  SALVAR NO BANCO (Google Sheets)
-    // ══════════════════════════════════════════════
-    async function salvarNoBanco() {
-        const tema = document.getElementById('tema').value;
-        const sermao = document.getElementById('saida').innerHTML;
-        if (sermao.length < 100 || sermao.includes('aparecerá aqui') || sermao.includes('Erro ao gerar')) {
-            return alert("Gere um sermão antes de salvar!");
-        }
+    // ── Histórico Local ──
+    function salvarNoHistorico(titulo, conteudo) {
+        const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
+        const data = new Date().toLocaleDateString('pt-BR');
+        h.unshift({ titulo, conteudo, data });
+        if (h.length > 10) h.pop();
+        localStorage.setItem('hist_sermoes_v3', JSON.stringify(h));
+        atualizarInterfaceHistorico();
+    }
 
+    function atualizarInterfaceHistorico() {
+        const div = document.getElementById('lista-historico');
+        const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
+        div.innerHTML = h.map((item, idx) => `
+            <div class="history-item" onclick="verHistoricoLocal(${idx})">
+                <span class="badge">${item.data}</span><br>
+                <strong style="color:var(--gold); font-size:17px;">${item.titulo}</strong>
+            </div>
+        `).join('') || '<p style="color:#555; text-align:center;">Nenhum sermão salvo ainda.</p>';
+    }
+
+    function verHistoricoLocal(i) {
+        const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
+        document.getElementById('roteiro').innerHTML = h[i].conteudo;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function limparHistorico() {
+        if (confirm("Apagar todo o histórico local?")) {
+            localStorage.removeItem('hist_sermoes_v3');
+            atualizarInterfaceHistorico();
+        }
+    }
+
+    // ── Salvar na Nuvem ──
+    async function salvarNoBanco() {
+        const tema   = document.getElementById('tema').value;
+        const sermao = document.getElementById('roteiro').innerHTML;
+        if (sermao.length < 100 || sermao.includes('aparecerá aqui') || sermao.includes('Configure') || sermao.includes('Olá')) {
+            return alert("Gere um sermão antes de salvar na nuvem!");
+        }
         fetch(URL_WEB_APP, {
-            method: "POST",
-            mode: "no-cors",
+            method: "POST", mode: "no-cors",
             body: JSON.stringify({ action: "create", tema: tema || "Sem Título", pregador: MEU_NOME, sermao })
         });
-        alert("✅ Sermão enviado para o banco de dados!");
+        alert("✅ Sermão enviado para a nuvem!");
     }
 
-    // ══════════════════════════════════════════════
-    //  HISTÓRICO
-    // ══════════════════════════════════════════════
+    // ── Histórico Nuvem ──
     async function abrirHistorico() {
         const modal = document.getElementById('modalHistorico');
         const lista = document.getElementById('listaSermoes');
         modal.style.display = 'block';
-        lista.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Buscando dados...</p>';
+        lista.innerHTML = '<p style="color:#888; text-align:center; padding:20px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Buscando...</p>';
 
         try {
-            const resp = await fetch(URL_WEB_APP + "?action=read");
+            const resp  = await fetch(URL_WEB_APP + "?action=read");
             const dados = await resp.json();
             window.bancoDados = dados;
 
-            let html = "";
-            dados.slice().reverse().forEach(s => {
-                html += `
-                <div class="item-lista" id="item-${s.id}">
-                    <div style="flex:1; cursor:pointer" onclick="verSermao('${s.id}')">
-                        <strong>${s.tema || 'Sem título'}</strong>
-                        <div class="item-date">${s.pregador || MEU_NOME}</div>
-                    </div>
-                    <div style="display:flex; gap:8px; margin-left:10px;">
-                        <button class="btn-abrir" onclick="verSermao('${s.id}')">ABRIR</button>
-                        <button class="btn-excluir" onclick="deletarSermao('${s.id}')"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </div>`;
-            });
+            lista.innerHTML = dados.length
+                ? dados.slice().reverse().map(s => `
+                    <div class="item-lista" id="item-${s.id}">
+                        <div style="flex:1; cursor:pointer;" onclick="verSermaoBanco('${s.id}')">
+                            <strong>${s.tema || 'Sem título'}</strong>
+                            <div class="item-data">${s.pregador || MEU_NOME}</div>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-left:10px;">
+                            <button class="btn-abrir" onclick="verSermaoBanco('${s.id}')">ABRIR</button>
+                            <button class="btn-excluir" onclick="deletarSermao('${s.id}')"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>`).join('')
+                : '<p style="color:#555; text-align:center; padding:20px;">Nenhum registro na nuvem.</p>';
 
-            lista.innerHTML = html || '<p style="color:var(--text-muted); text-align:center; padding:20px;">Nenhum registro encontrado.</p>';
         } catch (e) {
-            lista.innerHTML = '<p style="color:var(--accent); text-align:center; padding:20px;">Erro ao carregar histórico. Verifique a conexão.</p>';
+            lista.innerHTML = '<p style="color:#e74c3c; text-align:center; padding:20px;">Erro ao carregar histórico da nuvem.</p>';
+        }
+    }
+
+    function verSermaoBanco(id) {
+        const s = window.bancoDados?.find(x => x.id == id);
+        if (s) {
+            document.getElementById('roteiro').innerHTML = s.sermao;
+            document.getElementById('modalHistorico').style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
 
     async function deletarSermao(id) {
-        if (!confirm("Tem certeza que deseja remover este item?")) return;
+        if (!confirm("Remover este sermão da nuvem?")) return;
         const el = document.getElementById(`item-${id}`);
         if (el) el.style.opacity = '0.3';
         fetch(URL_WEB_APP, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({ action: "delete", id: id })
+            method: "POST", mode: "no-cors",
+            body: JSON.stringify({ action: "delete", id })
         });
-        setTimeout(() => { if(el) el.remove(); }, 500);
+        setTimeout(() => el?.remove(), 500);
     }
 
-    function verSermao(id) {
-        const s = window.bancoDados?.find(x => x.id == id);
-        if (s) {
-            document.getElementById('saida').innerHTML = s.sermao;
-            document.getElementById('modalHistorico').style.display = 'none';
-        }
-    }
-
-    // ══════════════════════════════════════════════
-    //  EXPORTAR PDF
-    // ══════════════════════════════════════════════
+    // ── PDF ──
     function baixarPDF() {
-        const element = document.getElementById('saida');
-        if (element.innerHTML.includes('aparecerá aqui')) {
+        const el = document.getElementById('roteiro');
+        if (el.innerHTML.includes('aparecerá aqui') || el.innerHTML.includes('Olá')) {
             return alert("Gere um sermão antes de exportar!");
         }
-        const opt = {
+        html2pdf().set({
             margin: 12,
-            filename: `Sermão_${MEU_NOME}_${Date.now()}.pdf`,
+            filename: `Sermao_${MEU_NOME.replace(' ','_')}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, backgroundColor: '#1a1a1a' },
+            html2canvas: { scale: 2, backgroundColor: '#161616' },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().set(opt).from(element).save();
+        }).from(el).save();
     }
 
-    // Atalho de teclado: Ctrl+Enter para gerar
-    document.getElementById('tema').addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.key === 'Enter') gerarSermao();
+    // Ctrl+Enter para gerar
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('tema').addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === 'Enter') gerarSermao();
+        });
     });
 </script>
 </body>
