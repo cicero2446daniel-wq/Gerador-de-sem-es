@@ -87,39 +87,53 @@
         document.getElementById('saida').innerHTML = `
             <div style="text-align: center; padding: 40px;">
                 <i class="fa-solid fa-circle-notch loading fa-2x" style="color: var(--primary);"></i>
-                <p style="margin-top: 20px; color: var(--text-muted);">Inspirando o seu sermão...</p>
+                <p style="margin-top: 20px; color: var(--text-muted);">Gerando sermão premium...</p>
             </div>`;
         
         try {
-            // Alterado para gemini-1.5-flash (mais moderno que o 'pro' antigo)
-            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY_GEMINI}`, {
+            // AJUSTE: Usando o modelo gemini-1.5-flash que é o que funciona no seu outro app
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY_GEMINI}`;
+            
+            const resp = await fetch(url, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: `Escreva um sermão cristão completo sobre: "${tema}". Estilo: ${referencia}. Assinado por: ${meuNome}.` }] }] 
+                    contents: [{ 
+                        parts: [{ 
+                            text: `Atue como um pregador experiente. Escreva um sermão completo sobre "${tema}" seguindo o estilo de ${referencia}. O sermão deve ser assinado por ${meuNome}. Use uma linguagem impactante e clara.` 
+                        }] 
+                    }] 
                 })
             });
             
             const d = await resp.json();
-
+            
             if (d.error) {
-                // Isso vai te dizer se a chave foi bloqueada ou se o modelo não existe
-                throw new Error(`${d.error.status}: ${d.error.message}`);
+                throw new Error(d.error.message);
             }
 
             let textoBruto = d.candidates[0].content.parts[0].text;
-            let textoFinal = textoBruto.trim().replace(/\n/g, '<br>');
+
+            // Lógica de limpeza de nomes que você já usa
+            const nomesProibidos = ["Pr. Cláudio Duarte", "Isaias de Oliveira", "Hernandes Dias Lopes", "Edmeia Williams"];
+            let textoLimpo = textoBruto;
+            nomesProibidos.forEach(nome => {
+                const regex = new RegExp(nome, "gi");
+                textoLimpo = textoLimpo.replace(regex, meuNome);
+            });
+
+            const textoFinal = textoLimpo.trim().replace(/\n/g, '<br>');
             
             document.getElementById('saida').innerHTML = `
                 <h2>${tema.toUpperCase()}</h2>
                 <p><strong>Pregador:</strong> ${meuNome}</p>
-                <hr style="border:none; border-top:1px solid var(--border); margin:15px 0;">
+                <hr>
                 <p>${textoFinal}</p>`;
             
         } catch(e) { 
-            console.error(e);
-            alert("Erro detalhado: " + e.message); 
-            document.getElementById('saida').innerHTML = '<p style="color: var(--accent);">Falha ao gerar. Verifique o alerta de segurança no seu GitHub.</p>';
+            console.error("Erro:", e);
+            alert("Erro na API: " + e.message); 
+            document.getElementById('saida').innerHTML = '<p style="color: var(--accent);">Erro ao gerar. Verifique se a chave no código é a mesma do AI Studio.</p>';
         }
     }
 
