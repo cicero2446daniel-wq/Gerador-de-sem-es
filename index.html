@@ -74,7 +74,7 @@
 
 <script>
     // Cole sua chave entre as aspas abaixo
-    const KEY_GEMINI = "AIzaSyB3tFc0hEDOKItEl2MpZZ4j4Vo-fAEMc08"; 
+    const KEY_GEMINI = "AIzaSyC7aWWAJZJtyLANjc3IDrWpNAY0nHSFd08"; 
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbwodI-fHJpXAUQknpHb4oSkfxVpxW_7715DiQey6BAPTrSUOAq9W0fFtTTR7stnEKFP/exec";
 
     async function gerarSermao() {
@@ -91,40 +91,24 @@
             </div>`;
         
         try {
-            // A MUDANÇA ESTÁ AQUI: v1beta e o modelo gemini-1.5-flash
+            // Alterado para gemini-1.5-flash (mais moderno que o 'pro' antigo)
             const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY_GEMINI}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ 
-                    contents: [{ 
-                        parts: [{ 
-                            text: `Escreva um sermão cristão completo e impactante sobre o tema ou versículo: "${tema}". Utilize a hermenêutica e o estilo de pregação de ${referencia}. O sermão deve ser assinado por ${meuNome} e em hipótese alguma mencione o nome de ${referencia} no corpo do texto.` 
-                        }] 
-                    }] 
+                    contents: [{ parts: [{ text: `Escreva um sermão cristão completo sobre: "${tema}". Estilo: ${referencia}. Assinado por: ${meuNome}.` }] }] 
                 })
             });
             
             const d = await resp.json();
 
             if (d.error) {
-                throw new Error(d.error.message);
+                // Isso vai te dizer se a chave foi bloqueada ou se o modelo não existe
+                throw new Error(`${d.error.status}: ${d.error.message}`);
             }
 
             let textoBruto = d.candidates[0].content.parts[0].text;
-
-            // Filtro de segurança para o seu nome
-            const nomesProibidos = [
-                "Pr. Cláudio Duarte", "Isaias de Oliveira", "Hernandes Dias Lopes", 
-                "Juliano Fraga", "Oziel Gomes", "Edmeia Williams", "Matheus Zandona"
-            ];
-
-            let textoLimpo = textoBruto;
-            nomesProibidos.forEach(n => {
-                const regex = new RegExp(n, "gi");
-                textoLimpo = textoLimpo.replace(regex, meuNome);
-            });
-
-            const textoFinal = textoLimpo.trim().replace(/\n/g, '<br>');
+            let textoFinal = textoBruto.trim().replace(/\n/g, '<br>');
             
             document.getElementById('saida').innerHTML = `
                 <h2>${tema.toUpperCase()}</h2>
@@ -134,8 +118,8 @@
             
         } catch(e) { 
             console.error(e);
-            alert("Erro na API: " + e.message); 
-            document.getElementById('saida').innerHTML = '<p style="color: var(--accent);">Falha ao gerar. Verifique se o modelo está ativo no seu Google AI Studio.</p>';
+            alert("Erro detalhado: " + e.message); 
+            document.getElementById('saida').innerHTML = '<p style="color: var(--accent);">Falha ao gerar. Verifique o alerta de segurança no seu GitHub.</p>';
         }
     }
 
