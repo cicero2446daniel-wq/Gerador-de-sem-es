@@ -185,6 +185,16 @@
             align-items: center;
         }
 
+        .btn-acao-lista {
+            background: var(--primary);
+            padding: 8px 15px;
+            border-radius: 8px;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
         .btn-excluir {
             background: var(--accent);
             color: white;
@@ -205,7 +215,7 @@
         <i class="fa-solid fa-moon"></i> TEMA
     </button>
     <div class="logo-area" style="text-align: center; margin-bottom: 25px;">
-        <img src="https://docs.google.com/uc?export=download&id=17z9JPfC2-Y4iCTbOFNmZdWSQWlJVu-Wx" alt="Logo" style="max-height: 100px;">
+        <img src="https://docs.google.com/uc?export=download&id=17z9JPfC2-Y4iCTbOFNmZdWSQWlJVu-Wx" alt="Logo" style="max-height: 100px;" onerror="this.style.display='none'">
     </div>
     <h1>GERADOR DE SERMÕES</h1>
     
@@ -240,79 +250,58 @@
     
     <div id="saida">
         <p style="color: var(--text-muted); text-align: center; padding: 20px;">
-            <i class="fa-solid fa-arrow-down"></i><br>O esboço aparecerá aqui...
+            <i class="fa-solid fa-arrow-down"></i><br>
+            O esboço do seu sermão aparecerá aqui...
         </p>
     </div>
 </div>
 
 <div id="modalHistorico">
     <div class="modal-content">
-        <button class="btn-fechar" style="background: var(--accent); color: white; padding: 10px; border-radius: 8px; float: right;" onclick="document.getElementById('modalHistorico').style.display='none'">FECHAR</button>
+        <button style="background: var(--accent); color: white; padding: 10px; border-radius: 8px; float: right; margin-bottom: 20px;" onclick="document.getElementById('modalHistorico').style.display='none'">FECHAR</button>
         <h2 style="color: var(--primary); margin-bottom: 20px;">Sermões Salvos</h2>
         <div id="listaSermoes"></div>
     </div>
 </div>
 
 <script>
-    // Chave e Link corrigidos
+    // CHAVE E URL
     const KEY_GEMINI = 'AIzaSyDMe1cwwMNAnIUeTEAasOsbwJEEq77Cf9w'; 
     const URL_WEB_APP = 'https://script.google.com/macros/s/AKfycbwodI-fHJpXAUQknpHb4oSkfxVpxW_7715DiQey6BAPTrSUOAq9W0fFtTTR7stnEKFP/exec';
 
     function toggleTheme() { document.body.classList.toggle('light-mode'); }
 
     async function gerarSermao() {
-    const tema = document.getElementById('tema').value;
-    const referencia = document.getElementById('estiloReferencia').value;
-    const meuNome = "Cicero Daniel";
+        const tema = document.getElementById('tema').value;
+        const referencia = document.getElementById('estiloReferencia').value;
+        const meuNome = "Cicero Daniel";
 
-    if(!tema) return alert("Por favor, digite um tema!");
-    
-    document.getElementById('saida').innerHTML = `
-        <div style="text-align: center; padding: 40px;">
-            <i class="fa-solid fa-circle-notch loading fa-2x" style="color: var(--primary);"></i>
-            <p style="margin-top:15px">Inspirando ideias e redigindo...</p>
-        </div>`;
-    
-    try {
-        // A alteração principal é mudar 'v1' para 'v1beta' na URL abaixo
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY_GEMINI}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ 
-                contents: [{ parts: [{ text: `Escreva um sermão cristão completo e impactante sobre o tema ou versículo: "${tema}". Utilize a hermenêutica e o estilo de pregação de ${referencia}. O sermão deve ser assinado por ${meuNome} e em hipótese alguma mencione o nome de ${referencia} no corpo do texto.` }] }] 
-            })
-        });
+        if(!tema) return alert("Por favor, digite um tema!");
         
-        const d = await resp.json();
+        document.getElementById('saida').innerHTML = `<div style="text-align: center; padding: 40px;"><i class="fa-solid fa-circle-notch loading fa-2x" style="color: var(--primary);"></i><p>Processando com IA...</p></div>`;
+        
+        try {
+            // USANDO O MODELO FLASH-LATEST NO ENDPOINT BETA
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${KEY_GEMINI}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: `Escreva um sermão cristão completo e impactante sobre: "${tema}". Use o estilo de pregação de ${referencia}. Assine como ${meuNome}. Não mencione o nome do pregador de referência no texto.` }] }] 
+                })
+            });
+            
+            const d = await resp.json();
+            if(d.error) throw new Error(d.error.message);
 
-        if(d.error) {
-            throw new Error(d.error.message);
+            let textoBruto = d.candidates[0].content.parts[0].text;
+            let textoFinal = textoBruto.replace(/\n/g, '<br>');
+            
+            document.getElementById('saida').innerHTML = `<h2>${tema.toUpperCase()}</h2><p><strong>Pregador:</strong> ${meuNome}</p><hr style="margin:15px 0; border:1px solid var(--border);"><p>${textoFinal}</p>`;
+        } catch(e) { 
+            alert("Erro na API: " + e.message); 
+            document.getElementById('saida').innerHTML = "Falha ao gerar. Verifique sua conexão ou chave API.";
         }
-
-        let textoBruto = d.candidates[0].content.parts[0].text;
-
-        // Filtro para garantir que o autor seja você
-        const nomesProibidos = ["Cláudio Duarte", "Isaias de Oliveira", "Hernandes Dias Lopes", "Juliano Fraga", "Oziel Gomes", "Edmeia Williams", "Matheus Zandona"];
-        let textoLimpo = textoBruto;
-        nomesProibidos.forEach(n => {
-            const regex = new RegExp(n, "gi");
-            textoLimpo = textoLimpo.replace(regex, meuNome);
-        });
-
-        let textoFinal = textoLimpo.replace(/\n/g, '<br>');
-        
-        document.getElementById('saida').innerHTML = `
-            <h2>${tema.toUpperCase()}</h2>
-            <p><strong>Pregador:</strong> ${meuNome}</p>
-            <hr style="border:1px solid var(--border); margin:15px 0;">
-            <p>${textoFinal}</p>`;
-
-    } catch(e) { 
-        console.error(e);
-        alert("Erro na API: " + e.message); 
-        document.getElementById('saida').innerHTML = `<p style="color:var(--accent)">Falha ao gerar sermão. Verifique se a chave está correta.</p>`;
     }
-}
 
     async function salvarNoBanco() {
         const tema = document.getElementById('tema').value;
@@ -320,47 +309,58 @@
         if(sermao.length < 50) return alert("Gere um sermão primeiro!");
         
         fetch(URL_WEB_APP, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "create", tema, pregador: "Cicero Daniel", sermao }) });
-        alert("Sermão enviado para o banco!");
+        alert("Salvo com sucesso!");
     }
 
     async function abrirHistorico() {
         document.getElementById('modalHistorico').style.display = 'block';
         document.getElementById('listaSermoes').innerHTML = "Carregando...";
-        const resp = await fetch(URL_WEB_APP + "?action=read");
-        window.bancoDados = await resp.json();
-        renderizarLista(window.bancoDados);
+        try {
+            const resp = await fetch(URL_WEB_APP + "?action=read");
+            window.bancoDados = await resp.json();
+            renderizarLista(window.bancoDados);
+        } catch(e) {
+            document.getElementById('listaSermoes').innerHTML = "Erro ao carregar dados.";
+        }
     }
 
     function renderizarLista(dados) {
         let html = "";
-        dados.slice().reverse().forEach(s => {
-            html += `
-            <div class="item-lista" id="item-${s.id}">
-                <strong>${s.tema}</strong>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-acao" onclick="verSermao('${s.id}')">ABRIR</button>
-                    <button class="btn-excluir" onclick="deletarSermao('${s.id}')"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>`;
-        });
-        document.getElementById('listaSermoes').innerHTML = html || '<p>Nenhum sermão salvo.</p>';
+        if(!dados || dados.length === 0) {
+            html = "<p>Nenhum sermão salvo.</p>";
+        } else {
+            dados.slice().reverse().forEach(s => {
+                html += `
+                <div class="item-lista" id="item-${s.id}">
+                    <div style="flex:1"><strong>${s.tema}</strong></div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-acao-lista" onclick="verSermao('${s.id}')">ABRIR</button>
+                        <button class="btn-excluir" onclick="deletarSermao('${s.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>`;
+            });
+        }
+        document.getElementById('listaSermoes').innerHTML = html;
     }
 
     async function deletarSermao(id) {
-        if(!confirm("Deseja deletar este sermão?")) return;
+        if(!confirm("Excluir este sermão permanentemente?")) return;
         fetch(URL_WEB_APP, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "delete", id: id }) });
-        document.getElementById(`item-${id}`).remove();
+        const el = document.getElementById(`item-${id}`);
+        if(el) el.remove();
     }
 
     function verSermao(id) {
         const s = window.bancoDados.find(item => item.id == id);
-        document.getElementById('saida').innerHTML = s.sermao;
-        document.getElementById('modalHistorico').style.display = 'none';
+        if(s) {
+            document.getElementById('saida').innerHTML = s.sermao;
+            document.getElementById('modalHistorico').style.display = 'none';
+        }
     }
 
     function baixarPDF() {
         const element = document.getElementById('saida');
-        html2pdf().from(element).save('Sermao_Cicero.pdf');
+        html2pdf().from(element).save('Sermao_Cicero_Daniel.pdf');
     }
 </script>
 </body>
