@@ -79,33 +79,63 @@
 
     async function gerarSermao() {
         const tema = document.getElementById('tema').value;
-        const pregador = document.getElementById('estiloReferencia').value;
+        const referencia = document.getElementById('estiloReferencia').value;
         const meuNome = "Cicero Daniel";
 
-        if(!tema) return alert("Por favor, informe um tema ou versículo!");
-
-        document.getElementById('saida').innerHTML = '<div style="text-align:center"><i class="fa-solid fa-circle-notch loading fa-2x" style="color:var(--primary)"></i><p>Preparando esboço...</p></div>';
-
+        if(!tema) return alert("Por favor, digite um tema!");
+        
+        document.getElementById('saida').innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <i class="fa-solid fa-circle-notch loading fa-2x" style="color: var(--primary);"></i>
+                <p style="margin-top: 20px; color: var(--text-muted);">Inspirando o seu sermão...</p>
+            </div>`;
+        
         try {
-            // USANDO ENDPOINT v1 COM MODELO FLASH (Mais compatível)
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${KEY_GEMINI}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Aja como um pregador experiente. Escreva um sermão completo sobre "${tema}" seguindo o estilo de pregação de ${pregador}. O sermão deve ser assinado por ${meuNome}. Não use o nome de ${pregador} no corpo do texto.` }] }]
+            // A MUDANÇA ESTÁ AQUI: v1beta e o modelo gemini-1.5-flash
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY_GEMINI}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    contents: [{ 
+                        parts: [{ 
+                            text: `Escreva um sermão cristão completo e impactante sobre o tema ou versículo: "${tema}". Utilize a hermenêutica e o estilo de pregação de ${referencia}. O sermão deve ser assinado por ${meuNome} e em hipótese alguma mencione o nome de ${referencia} no corpo do texto.` 
+                        }] 
+                    }] 
                 })
             });
-
-            const data = await response.json();
             
-            if(data.error) throw new Error(data.error.message);
+            const d = await resp.json();
 
-            const textoLimpo = data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
-            document.getElementById('saida').innerHTML = `<h2>${tema}</h2><br><p><strong>Pregador:</strong> ${meuNome}</p><hr style="border:0; border-top:1px solid #333; margin:15px 0;"><p>${textoLimpo}</p>`;
-        } catch (e) {
+            if (d.error) {
+                throw new Error(d.error.message);
+            }
+
+            let textoBruto = d.candidates[0].content.parts[0].text;
+
+            // Filtro de segurança para o seu nome
+            const nomesProibidos = [
+                "Pr. Cláudio Duarte", "Isaias de Oliveira", "Hernandes Dias Lopes", 
+                "Juliano Fraga", "Oziel Gomes", "Edmeia Williams", "Matheus Zandona"
+            ];
+
+            let textoLimpo = textoBruto;
+            nomesProibidos.forEach(n => {
+                const regex = new RegExp(n, "gi");
+                textoLimpo = textoLimpo.replace(regex, meuNome);
+            });
+
+            const textoFinal = textoLimpo.trim().replace(/\n/g, '<br>');
+            
+            document.getElementById('saida').innerHTML = `
+                <h2>${tema.toUpperCase()}</h2>
+                <p><strong>Pregador:</strong> ${meuNome}</p>
+                <hr style="border:none; border-top:1px solid var(--border); margin:15px 0;">
+                <p>${textoFinal}</p>`;
+            
+        } catch(e) { 
             console.error(e);
-            alert("Erro na API: " + e.message + "\n\nTente gerar uma nova chave se o erro persistir.");
-            document.getElementById('saida').innerHTML = "<p style='color:var(--accent)'>Erro ao gerar conteúdo. Verifique sua chave de API.</p>";
+            alert("Erro na API: " + e.message); 
+            document.getElementById('saida').innerHTML = '<p style="color: var(--accent);">Falha ao gerar. Verifique se o modelo está ativo no seu Google AI Studio.</p>';
         }
     }
 
