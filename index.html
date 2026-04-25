@@ -15,22 +15,25 @@
             --text-light: #f0f0f0; --text-muted: #888; --border: #333;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: var(--bg-dark); color: var(--text-light); padding: 20px; display: flex; justify-content: center; }
-        .card { background: var(--bg-card); padding: 30px; border-radius: 20px; width: 100%; max-width: 800px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: var(--primary); text-align: center; margin-bottom: 25px; letter-spacing: 2px; }
-        label { display: block; color: var(--text-muted); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; }
-        textarea, select { width: 100%; padding: 15px; margin-bottom: 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-input); color: #fff; font-size: 16px; }
-        .btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-        button { padding: 15px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
-        .btn-gerar { background: var(--primary); color: #000; }
+        body { background: var(--bg-dark); color: var(--text-light); padding: 20px; display: flex; justify-content: center; transition: background 0.3s; }
+        .card { background: var(--bg-card); padding: 30px; border-radius: 20px; width: 100%; max-width: 800px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 20px 20px 0 0; }
+        h1 { color: var(--primary); text-align: center; margin-bottom: 25px; letter-spacing: 2px; font-size: 24px; }
+        label { display: block; color: var(--text-muted); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; font-weight: bold; }
+        textarea, select { width: 100%; padding: 15px; margin-bottom: 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-input); color: #fff; font-size: 16px; outline: none; }
+        textarea:focus { border-color: var(--primary); }
+        .btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+        button { padding: 15px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; text-transform: uppercase; font-size: 13px; }
+        .btn-gerar { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #000; }
         .btn-hist { background: #8e44ad; color: #fff; }
         .btn-pdf { background: #27ae60; color: #fff; }
         .btn-bd { background: #3498db; color: #fff; }
-        #saida { margin-top: 30px; padding: 20px; background: var(--bg-input); border-radius: 10px; line-height: 1.8; min-height: 100px; }
-        #modalHistorico { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; padding: 20px; overflow-y: auto; }
-        .item-lista { background: #333; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-excluir { background: var(--accent); color: white; padding: 8px; border-radius: 5px; }
-        .loading { animation: spin 1s linear infinite; }
+        button:hover { opacity: 0.8; transform: translateY(-2px); }
+        #saida { margin-top: 30px; padding: 25px; background: linear-gradient(145deg, #1e1e1e, #141414); border-radius: 15px; line-height: 1.8; border: 1px solid var(--border); min-height: 150px; }
+        #modalHistorico { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; padding: 20px; overflow-y: auto; backdrop-filter: blur(5px); }
+        .item-lista { background: #252525; padding: 18px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
+        .btn-excluir { background: var(--accent); color: white; padding: 10px; border-radius: 8px; width: 40px; }
+        .loading { animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
@@ -39,13 +42,14 @@
 <div class="card">
     <h1>GERADOR DE SERMÕES</h1>
     <label>Tema ou Versículo</label>
-    <textarea id="tema" placeholder="Ex: A importância da fé em tempos difíceis" rows="3"></textarea>
+    <textarea id="tema" placeholder="Sobre o que vamos pregar hoje?" rows="3"></textarea>
     
-    <label>Estilo do Pregador</label>
+    <label>Estilo de Referência</label>
     <select id="estiloReferencia">
         <option value="Pr. Cláudio Duarte">Pr. Cláudio Duarte</option>
         <option value="Pr. Hernandes Dias Lopes">Pr. Hernandes Dias Lopes</option>
         <option value="Pr. Isaias de Oliveira">Pr. Isaias de Oliveira</option>
+        <option value="Miss. Edmeia Williams">Miss. Edmeia Williams</option>
     </select>
 
     <div class="btns">
@@ -55,91 +59,133 @@
         <button class="btn-pdf" onclick="baixarPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
     </div>
     
-    <div id="saida">O sermão aparecerá aqui...</div>
+    <div id="saida">
+        <p style="text-align:center; color:var(--text-muted)">O rascunho do sermão aparecerá aqui após clicar em Gerar.</p>
+    </div>
 </div>
 
 <div id="modalHistorico">
-    <div style="max-width: 600px; margin: auto;">
-        <button style="background:var(--accent); color:#fff; margin-bottom:20px;" onclick="document.getElementById('modalHistorico').style.display='none'">FECHAR</button>
+    <div style="max-width: 700px; margin: 40px auto;">
+        <button style="background:var(--accent); color:#fff; margin-bottom:20px; width: 120px;" onclick="document.getElementById('modalHistorico').style.display='none'">FECHAR</button>
+        <h2 style="color:var(--primary); margin-bottom: 20px;">Histórico de Mensagens</h2>
         <div id="listaSermoes"></div>
     </div>
 </div>
 
 <script>
-    // INSIRA SUA CHAVE DO AI STUDIO AQUI
+    // Cole sua chave entre as aspas abaixo
     const KEY_GEMINI = "AIzaSyApUlp0A0t_uyZ2nth6lgB4iDtwmKXKprA"; 
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbwodI-fHJpXAUQknpHb4oSkfxVpxW_7715DiQey6BAPTrSUOAq9W0fFtTTR7stnEKFP/exec";
 
     async function gerarSermao() {
         const tema = document.getElementById('tema').value;
         const pregador = document.getElementById('estiloReferencia').value;
-        if(!tema) return alert("Digite um tema!");
+        const meuNome = "Cicero Daniel";
 
-        document.getElementById('saida').innerHTML = '<i class="fa-solid fa-circle-notch loading"></i> Gerando sermão...';
+        if(!tema) return alert("Por favor, informe um tema ou versículo!");
+
+        document.getElementById('saida').innerHTML = '<div style="text-align:center"><i class="fa-solid fa-circle-notch loading fa-2x" style="color:var(--primary)"></i><p>Preparando esboço...</p></div>';
 
         try {
-            // ENDPOINT E MODELO COMPATÍVEIS COM GOOGLE AI STUDIO (v1beta)
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY_GEMINI}`, {
+            // USANDO ENDPOINT v1 COM MODELO FLASH (Mais compatível)
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${KEY_GEMINI}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Escreva um sermão cristão sobre ${tema} no estilo de ${pregador}. Assine como Cicero Daniel.` }] }]
+                    contents: [{ parts: [{ text: `Aja como um pregador experiente. Escreva um sermão completo sobre "${tema}" seguindo o estilo de pregação de ${pregador}. O sermão deve ser assinado por ${meuNome}. Não use o nome de ${pregador} no corpo do texto.` }] }]
                 })
             });
 
             const data = await response.json();
+            
             if(data.error) throw new Error(data.error.message);
 
-            const texto = data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
-            document.getElementById('saida').innerHTML = `<h3>${tema}</h3><br>${texto}`;
+            const textoLimpo = data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
+            document.getElementById('saida').innerHTML = `<h2>${tema}</h2><br><p><strong>Pregador:</strong> ${meuNome}</p><hr style="border:0; border-top:1px solid #333; margin:15px 0;"><p>${textoLimpo}</p>`;
         } catch (e) {
-            alert("Erro: " + e.message);
-            document.getElementById('saida').innerHTML = "Erro ao gerar.";
+            console.error(e);
+            alert("Erro na API: " + e.message + "\n\nTente gerar uma nova chave se o erro persistir.");
+            document.getElementById('saida').innerHTML = "<p style='color:var(--accent)'>Erro ao gerar conteúdo. Verifique sua chave de API.</p>";
         }
     }
 
     async function salvarNoBanco() {
         const tema = document.getElementById('tema').value;
         const sermao = document.getElementById('saida').innerHTML;
-        if(sermao.length < 50) return alert("Gere um sermão primeiro!");
-        fetch(URL_WEB_APP, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "create", tema, pregador: "Cicero Daniel", sermao }) });
-        alert("Salvo!");
+        if(sermao.length < 50) return alert("Gere um sermão antes de salvar!");
+        
+        fetch(URL_WEB_APP, { 
+            method: "POST", 
+            mode: "no-cors", 
+            body: JSON.stringify({ action: "create", tema: tema || "Sem Título", pregador: "Cicero Daniel", sermao }) 
+        });
+        alert("Sermão enviado para o banco de dados!");
     }
 
     async function abrirHistorico() {
-        document.getElementById('modalHistorico').style.display = 'block';
-        const resp = await fetch(URL_WEB_APP + "?action=read");
-        const dados = await resp.json();
-        let html = "";
-        dados.slice().reverse().forEach(s => {
-            html += `
-            <div class="item-lista" id="item-${s.id}">
-                <span>${s.tema}</span>
-                <div style="display:flex; gap:5px;">
-                    <button onclick="verSermao('${s.id}')" style="background:var(--primary); padding:5px;">VER</button>
-                    <button class="btn-excluir" onclick="deletarSermao('${s.id}')"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>`;
-        });
-        document.getElementById('listaSermoes').innerHTML = html || "Vazio";
-        window.bancoDados = dados;
+        const modal = document.getElementById('modalHistorico');
+        const lista = document.getElementById('listaSermoes');
+        modal.style.display = 'block';
+        lista.innerHTML = '<p><i class="fa-solid fa-circle-notch loading"></i> Buscando dados...</p>';
+        
+        try {
+            const resp = await fetch(URL_WEB_APP + "?action=read");
+            const dados = await resp.json();
+            window.bancoDados = dados;
+            
+            let html = "";
+            dados.slice().reverse().forEach(s => {
+                html += `
+                <div class="item-lista" id="item-${s.id}">
+                    <div style="flex:1; cursor:pointer" onclick="verSermao('${s.id}')">
+                        <strong>${s.tema}</strong>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="verSermao('${s.id}')" style="background:var(--primary); color:#000; padding:8px 12px; border-radius:8px;">ABRIR</button>
+                        <button class="btn-excluir" onclick="deletarSermao('${s.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>`;
+            });
+            lista.innerHTML = html || "Nenhum registro encontrado.";
+        } catch (e) {
+            lista.innerHTML = "Erro ao carregar histórico.";
+        }
     }
 
     async function deletarSermao(id) {
-        if(!confirm("Deletar permanentemente?")) return;
-        fetch(URL_WEB_APP, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "delete", id: id }) });
-        document.getElementById(`item-${id}`).remove();
+        if(!confirm("Tem certeza que deseja remover este item do histórico?")) return;
+        
+        // Remove da tela na hora
+        const el = document.getElementById(`item-${id}`);
+        if(el) el.style.opacity = '0.3';
+        
+        fetch(URL_WEB_APP, { 
+            method: "POST", 
+            mode: "no-cors", 
+            body: JSON.stringify({ action: "delete", id: id }) 
+        });
+        
+        setTimeout(() => el.remove(), 500);
     }
 
     function verSermao(id) {
         const s = window.bancoDados.find(x => x.id == id);
-        document.getElementById('saida').innerHTML = s.sermao;
-        document.getElementById('modalHistorico').style.display = 'none';
+        if(s) {
+            document.getElementById('saida').innerHTML = s.sermao;
+            document.getElementById('modalHistorico').style.display = 'none';
+        }
     }
 
     function baixarPDF() {
         const element = document.getElementById('saida');
-        html2pdf().from(element).save('Sermao.pdf');
+        const opt = {
+            margin: 10,
+            filename: 'Sermão_Cicero_Daniel.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
     }
 </script>
 </body>
