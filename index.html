@@ -6,9 +6,11 @@
     <meta name="theme-color" content="#1a1a1a">
     <meta name="description" content="Gerador de Sermões - Gere pregações rapidamente">
     <title>Gerador de Sermões Pro v2</title>
-<link rel="icon" href="icone_sermoes.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="icone_sermoes.png" type="image/png">
     <link rel="apple-touch-icon" href="icone_sermoes.png">
     <link rel="manifest" href="manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --bg-dark: #0d0d0d;
@@ -95,11 +97,6 @@
             box-shadow: 0 4px 15px rgba(245,176,65,0.4);
         }
 
-        .theme-toggle:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(245,176,65,0.5);
-        }
-
         h1 {
             color: var(--primary);
             text-align: center;
@@ -110,8 +107,6 @@
             font-weight: 700;
             text-shadow: var(--glow);
         }
-
-        h1 i { margin-right: 12px; }
 
         label {
             display: block;
@@ -131,27 +126,8 @@
             border: 2px solid var(--border);
             background: var(--bg-input);
             color: var(--text-light);
-            box-sizing: border-box;
             font-size: 16px;
-            font-family: 'Poppins', sans-serif;
             transition: all 0.3s ease;
-            resize: vertical;
-        }
-
-        textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(245,176,65,0.15);
-        }
-
-        textarea::placeholder {
-            color: var(--text-muted);
-        }
-
-        select option {
-            background: var(--bg-card);
-            color: var(--text-light);
-            padding: 10px;
         }
 
         .btns {
@@ -172,44 +148,13 @@
             justify-content: center;
             gap: 10px;
             transition: all 0.3s ease;
-            font-size: 14px;
-            font-family: 'Poppins', sans-serif;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-
-        button:active {
-            transform: translateY(-1px);
-        }
-
-        .btn-gerar {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: #1a1a1a;
-            box-shadow: 0 8px 25px rgba(245,176,65,0.4);
-        }
-
-        .btn-pdf {
-            background: linear-gradient(135deg, var(--success), #1e8449);
-            color: #fff;
-            box-shadow: 0 8px 25px rgba(39,174,96,0.3);
-        }
-
-        .btn-bd {
-            background: linear-gradient(135deg, var(--info), #2471a3);
-            color: #fff;
-            box-shadow: 0 8px 25px rgba(52,152,219,0.3);
-        }
-
-        .btn-hist {
-            background: linear-gradient(135deg, #8e44ad, #6c3483);
-            color: #fff;
-            box-shadow: 0 8px 25px rgba(142,68,173,0.3);
-        }
+        .btn-gerar { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #1a1a1a; }
+        .btn-pdf { background: linear-gradient(135deg, var(--success), #1e8449); color: #fff; }
+        .btn-bd { background: linear-gradient(135deg, var(--info), #2471a3); color: #fff; }
+        .btn-hist { background: linear-gradient(135deg, #8e44ad, #6c3483); color: #fff; }
 
         #saida {
             margin-top: 35px;
@@ -218,48 +163,14 @@
             background: linear-gradient(135deg, var(--bg-input), var(--bg-card));
             border: 2px solid var(--border);
             line-height: 1.9;
-            font-size: 17px;
-            min-height: 150px;
             color: var(--text-light);
-            transition: all 0.3s ease;
         }
 
-        #saida h2 {
-            color: var(--primary);
-            font-size: 22px;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        #saida hr {
-            border: none;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary), transparent);
-            margin: 20px 0;
-        }
-
-        #saida strong {
-            color: var(--primary);
-        }
-
-        .loading {
-            display: inline-block;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
+        /* Modal e Lista */
         #modalHistorico {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95);
             z-index: 9999;
             padding: 30px;
@@ -267,82 +178,32 @@
             backdrop-filter: blur(10px);
         }
 
-        .modal-content {
-            max-width: 750px;
-            margin: 0 auto;
-        }
-
-        .btn-fechar {
-            background: var(--accent);
-            color: #fff;
-            padding: 12px 25px;
-            border-radius: 10px;
-            float: right;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
-
-        #modalHistorico h2 {
-            color: var(--primary);
-            margin-bottom: 25px;
-            font-size: 24px;
-        }
+        .modal-content { max-width: 750px; margin: 0 auto; }
 
         .item-lista {
             background: var(--bg-input);
             border: 2px solid var(--border);
-            padding: 20px;
+            padding: 15px 20px;
             border-radius: 14px;
             margin-bottom: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.3s ease;
         }
 
-        .item-lista:hover {
-            border-color: var(--primary);
-            transform: translateX(5px);
-        }
+        .item-acoes { display: flex; gap: 10px; }
 
-        .item-lista strong {
-            color: var(--primary);
-            font-size: 15px;
-        }
-
-        .btn-acao {
-            padding: 10px 18px;
+        .btn-excluir {
+            background: var(--accent);
+            color: white;
+            padding: 8px 12px;
             border-radius: 8px;
-            font-size: 12px;
+            border: none;
             cursor: pointer;
-            background: var(--primary);
-            color: #1a1a1a;
-            font-weight: 600;
         }
 
-        .empty-msg {
-            text-align: center;
-            color: var(--text-muted);
-            padding: 40px;
-            font-size: 16px;
-        }
-
-        .logo-area {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .logo-area img {
-            max-height: 100px;
-            max-width: 100%;
-            object-fit: contain;
-        }
-        @media (max-width: 768px) {
-            .card { padding: 30px 20px; }
-            h1 { font-size: 20px; }
-            .btns { grid-template-columns: 1fr; }
-            .theme-toggle { top: 15px; right: 15px; padding: 8px 15px; font-size: 11px; }
-            .logo-area img { max-height: 70px; }
-        }
+        .loading { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -351,8 +212,8 @@
     <button class="theme-toggle" onclick="toggleTheme()">
         <i class="fa-solid fa-moon"></i> TEMA
     </button>
-    <div class="logo-area">
-        <img src="https://docs.google.com/uc?export=download&id=17z9JPfC2-Y4iCTbOFNmZdWSQWlJVu-Wx" alt="Logo" onerror="this.style.display='none'">
+    <div class="logo-area" style="text-align: center; margin-bottom: 25px;">
+        <img src="https://docs.google.com/uc?export=download&id=17z9JPfC2-Y4iCTbOFNmZdWSQWlJVu-Wx" alt="Logo" style="max-height: 100px;" onerror="this.style.display='none'">
     </div>
     <h1>GERADOR DE SERMÕES</h1>
     
@@ -395,24 +256,19 @@
 
 <div id="modalHistorico">
     <div class="modal-content">
-        <button class="btn-fechar" onclick="document.getElementById('modalHistorico').style.display='none'">
-            <i class="fa-solid fa-xmark"></i> FECHAR
-        </button>
-        <div style="clear: both;"></div>
-        <h2><i class="fa-solid fa-folder-open"></i> Meus Sermões Salvos</h2>
+        <button class="btn-fechar" style="background: var(--accent); color: white; padding: 10px; border-radius: 8px; float: right;" onclick="document.getElementById('modalHistorico').style.display='none'">FECHAR</button>
+        <h2 style="color: var(--primary); margin-bottom: 20px;">Meus Sermões Salvos</h2>
         <div id="listaSermoes"></div>
     </div>
 </div>
 
 <script>
-    const KEY_GEMINI = 'AIzaSyD68vhQg8kv-cYUbRoC_v74GeRf9iZWL0o'; 
+    // ATENÇÃO: Substitua a chave abaixo por uma nova gerada no Google AI Studio
+    const KEY_GEMINI = 'AIzaSyDMe1cwwMNAnIUeTEAasOsbwJEEq77Cf9w'; 
     const URL_WEB_APP = 'https://script.google.com/macros/s/AKfycbwodI-fHJpXAUQknpHb4oSkfxVpxW_7715DiQey6BAPTrSUOAq9W0fFtTTR7stnEKFP/exec';
 
     function toggleTheme() { 
         document.body.classList.toggle('light-mode');
-        const icon = document.querySelector('.theme-toggle i');
-        icon.classList.toggle('fa-moon');
-        icon.classList.toggle('fa-sun');
     }
 
     async function gerarSermao() {
@@ -421,77 +277,32 @@
         const meuNome = "Cicero Daniel";
 
         if(!tema) return alert("Por favor, digite um tema!");
-        document.getElementById('saida').innerHTML = `
-            <div style="text-align: center; padding: 40px;">
-                <i class="fa-solid fa-circle-notch loading fa-2x" style="color: var(--primary);"></i>
-                <p style="margin-top: 20px; color: var(--text-muted);">Gerando e revisando...</p>
-            </div>`;
+        document.getElementById('saida').innerHTML = `<div style="text-align: center; padding: 40px;"><i class="fa-solid fa-circle-notch loading fa-2x" style="color: var(--primary);"></i><p>Gerando...</p></div>`;
         
         try {
-            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${KEY_GEMINI}`, {
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${KEY_GEMINI}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    contents: [{ 
-                        parts: [{ 
-                            text: `Escreva um sermão completo sobre "${tema}" usando o estilo de pregação de ${referencia}. O texto deve ser escrito por ${meuNome}.` 
-                        }] 
-                    }] 
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: `Escreva um sermão sobre "${tema}" no estilo de ${referencia}. Assinado por ${meuNome}.` }] }] })
             });
             
             const d = await resp.json();
-            
-            if (d.error) {
-                throw new Error(d.error.message || "Erro da API");
-            }
-            if (!d.candidates || !d.candidates[0]) {
-                throw new Error("Resposta inválida da IA");
-            }
-            
             let textoBruto = d.candidates[0].content.parts[0].text;
-
-            const nomesProibidos = [
-                "Pr. Cláudio Duarte", "Cláudio Duarte", 
-                "Pr. Isaias de Oliveira", "Isaias de Oliveira",
-                "Pr. Hernandes Dias Lopes", "Hernandes Dias Lopes",
-                "Pr. Juliano Fraga", "Juliano Fraga",
-                "Pr. Oziel Gomes", "Oziel Gomes",
-                "Miss. Edmeia Williams", "Edmeia Williams", "Miss.",
-                "Prof. Matheus Zandona Guimarães", "Matheus Zandona Guimarães", "Matheus Zandona", "Prof."
-            ];
-
-            let textoLimpo = textoBruto;
+            let textoFinal = textoBruto.replace(/\n/g, '<br>');
             
-            // Substitui TODOS os nomes proibidos por Cicero Daniel
-            nomesProibidos.forEach(nome => {
-                const regex = new RegExp(nome, "gi");
-                textoLimpo = textoLimpo.replace(regex, "Cicero Daniel");
-            });
-
-            const textoFinal = textoLimpo.trim().replace(/\n/g, '<br>');
-            
-            document.getElementById('saida').innerHTML = `
-                <h2>${tema.toUpperCase()}</h2>
-                <p><strong>Pregador:</strong> ${meuNome}</p>
-                <hr>
-                <p>${textoFinal}</p>`;
-            
+            document.getElementById('saida').innerHTML = `<h2>${tema}</h2><p><strong>Pregador:</strong> ${meuNome}</p><hr><p>${textoFinal}</p>`;
         } catch(e) { 
-            console.error("Erro:", e);
-            alert("Erro ao conectar com a IA: " + e.message); 
-            document.getElementById('saida').innerHTML = '<p style="color: var(--accent);">Erro ao gerar. Tente novamente.</p>';
+            alert("Erro: Verifique sua chave API."); 
         }
     }
 
     async function salvarNoBanco() {
         const tema = document.getElementById('tema').value;
-        const pregador = "Cicero Daniel"; 
         const sermao = document.getElementById('saida').innerHTML;
-        if(sermao.length < 50) return alert("Gere um sermão antes de salvar!");
+        if(sermao.length < 50) return alert("Gere um sermão primeiro!");
         
-        fetch(URL_WEB_APP, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "create", tema, pregador, sermao }) });
-        alert("Sermão salvo com sucesso!");
+        fetch(URL_WEB_APP, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "create", tema, pregador: "Cicero Daniel", sermao }) });
+        alert("Salvo!");
     }
 
     async function abrirHistorico() {
@@ -504,23 +315,45 @@
     function renderizarLista(dados) {
         let html = "";
         dados.slice().reverse().forEach(s => {
-            html += `<div class="item-lista">
-                <div><strong>${s.tema}</strong></div>
-                <button class="btn-acao" onclick="verSermao('${s.id}')">ABRIR</button>
+            html += `
+            <div class="item-lista" id="item-${s.id}">
+                <strong>${s.tema}</strong>
+                <div class="item-acoes">
+                    <button class="btn-acao" style="background: var(--primary); padding: 5px 10px; border-radius: 5px;" onclick="verSermao('${s.id}')">ABRIR</button>
+                    <button class="btn-excluir" onclick="deletarSermao('${s.id}')"><i class="fa-solid fa-trash"></i></button>
+                </div>
             </div>`;
         });
-        document.getElementById('listaSermoes').innerHTML = html || '<p class="empty-msg">Nenhum sermon salvo.</p>';
+        document.getElementById('listaSermoes').innerHTML = html || '<p>Vazio.</p>';
+    }
+
+    async function deletarSermao(id) {
+        if(!confirm("Deseja excluir este sermão?")) return;
+        
+        try {
+            // Envia comando de delete para o Apps Script
+            fetch(URL_WEB_APP, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify({ action: "delete", id: id }) 
+            });
+            
+            // Remove da interface visual imediatamente
+            document.getElementById(`item-${id}`).style.display = 'none';
+        } catch (e) {
+            alert("Erro ao excluir.");
+        }
     }
 
     function verSermao(id) {
-        const s = window.bancoDados.find(item => item.id === id);
+        const s = window.bancoDados.find(item => item.id == id);
         document.getElementById('saida').innerHTML = s.sermao;
         document.getElementById('modalHistorico').style.display = 'none';
     }
 
     function baixarPDF() {
         const element = document.getElementById('saida');
-        html2pdf().from(element).save('Sermao_Cicero_Daniel.pdf');
+        html2pdf().from(element).save('Sermao_Cicero.pdf');
     }
 </script>
 </body>
