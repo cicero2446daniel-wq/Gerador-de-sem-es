@@ -320,80 +320,143 @@ Use a seguinte estrutura com estes títulos exatos em negrito:
 
 Escreva em português brasileiro. Linguagem clara, impactante e que toque o coração das pessoas.`;
 
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${MINHA_CHAVE}`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: instrucao }] }] })
-            });
+        // Modelos em ordem de preferência — se um estiver sobrecarregado, tenta o próximo
+        const MODELOS = [
+            'gemini-2.5-flash',
+            'gemini-1.5-flash',
+            'gemini-1.5-flash-8b'
+        ];
 
-            const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
+        const delay = ms => new Promise(r => setTimeout(r, ms));
 
-            let texto = data.candidates[0].content.parts[0].text;
+        let textoFinal = null;
+        let ultimoErro = null;
+        let modeloUsado = '';
 
-            // Substituir nomes de referência
-            NOMES_PROIBIDOS.forEach(nome => {
-                texto = texto.replace(new RegExp(nome, "gi"), MEU_NOME);
-            });
-
-            // Formatar negritos
-            const textoFormatado = texto.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-
-            display.innerHTML = `
-                <div style="text-align:center; margin-bottom:16px;">
-                    <h2 style="margin:0; color:var(--gold); font-size:20px; text-transform:uppercase;">${tema}</h2>
-                    <p style="margin:6px 0 0; font-size:13px; color:#888;">
-                        Pregador: ${MEU_NOME} &nbsp;|&nbsp; Estilo: ${referencia}
-                    </p>
-                </div>
-                <hr style="border-top:1px solid #333; margin-bottom:16px;">
-                ${textoFormatado}`;
-
-            salvarNoHistorico(tema.toUpperCase(), display.innerHTML);
-
-        } catch (e) {
-            console.error(e);
-            // Detecta erro de autenticação/chave inválida
-            const isAuthError = e.message && (
-                e.message.includes('API_KEY') ||
-                e.message.includes('API key') ||
-                e.message.includes('INVALID_ARGUMENT') ||
-                e.message.includes('403') ||
-                e.message.includes('401') ||
-                e.message.includes('invalid')
-            );
-            if (isAuthError) {
-                atualizarStatusChave('alert');
-                document.getElementById('key-badge').className = 'key-badge alert';
-                display.innerHTML = `
-                    <div style="text-align:center; padding:20px; color:#e74c3c;">
-                        <i class="fa-solid fa-key" style="font-size:28px; display:block; margin-bottom:10px;"></i>
-                        <b>Chave API inválida ou expirada</b><br>
-                        <span style="font-size:13px; color:#888; display:block; margin:8px 0;">Insira uma nova chave para continuar.</span>
-                        <button onclick="toggleConfig()" style="margin-top:10px; background:var(--gold); border:none; padding:11px 22px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px;">
-                            <i class="fa-solid fa-cog"></i> Atualizar Chave API
-                        </button>
+        for (let m = 0; m < MODELOS.length; m++) {
+            const modelo = MODELOS[m];
+            // Tenta até 2 vezes por modelo em caso de 503
+            for (let tentativa = 1; tentativa <= 2; tentativa++) {
+                try {
+                    display.innerHTML = `<div style='text-align:center; padding:30px; color:#888;'>
+                        <i class='fa-solid fa-circle-notch fa-spin' style='font-size:28px; color:var(--gold);'></i>
+                        <br><br>
+                        <span style='font-size:13px;'>Modelo: <b style='color:var(--gold)'>${modelo}</b>${tentativa > 1 ? ' — tentativa ' + tentativa : ''}</span>
                     </div>`;
-                // Abre o painel automaticamente
-                const p = document.getElementById('config-panel');
-                p.style.display = 'block';
-                document.getElementById('api-key-input').value = '';
-                atualizarStatusChave('alert');
-            } else {
-                display.innerHTML = `
-                    <div style="text-align:center; padding:20px; color:#e74c3c;">
-                        <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; display:block; margin-bottom:10px;"></i>
-                        <b>Erro na conexão</b><br>
-                        <span style="font-size:13px; color:#888;">${e.message}</span><br><br>
-                        <span style="font-size:12px; color:#666;">Verifique sua chave API ⚙️ ou conexão com a internet.</span>
-                    </div>`;
+
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${MINHA_CHAVE}`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: instrucao }] }] })
+                    });
+
+                    const data = await response.json();
+
+                    // ── Erro de autenticação (chave inválida/expirada) ──
+                    if (response.status === 400 || response.status === 401 || response.status === 403 ||
+                        (data.error && (data.error.status === 'INVALID_ARGUMENT' || data.error.status === 'PERMISSION_DENIED' ||
+                         (data.error.message && (data.error.message.toLowerCase().includes('api key') || data.error.message.toLowerCase().includes('api_key')))))) {
+                        throw { tipo: 'AUTH', msg: data.error?.message || 'Chave inválida ou sem permissão.' };
+                    }
+
+                    // ── Servidor sobrecarregado (503) — tenta próxima vez/modelo ──
+                    if (response.status === 503 || response.status === 429 ||
+                        (data.error && (data.error.status === 'UNAVAILABLE' || data.error.status === 'RESOURCE_EXHAUSTED' ||
+                         (data.error.message && data.error.message.toLowerCase().includes('high demand'))))) {
+                        ultimoErro = { tipo: 'SOBRECARGA', msg: data.error?.message || 'Servidor sobrecarregado.' };
+                        if (tentativa < 2) {
+                            display.innerHTML = `<div style='text-align:center; padding:20px; color:#f39c12;'>
+                                <i class='fa-solid fa-circle-notch fa-spin'></i> Servidor ocupado, tentando novamente em 4s...
+                            </div>`;
+                            await delay(4000);
+                        }
+                        continue; // tenta de novo ou próximo modelo
+                    }
+
+                    if (data.error) throw { tipo: 'GERAL', msg: data.error.message };
+
+                    textoFinal = data.candidates[0].content.parts[0].text;
+                    modeloUsado = modelo;
+                    break; // sucesso!
+
+                } catch (e) {
+                    if (e.tipo === 'AUTH') {
+                        // Erro de chave: não adianta tentar outros modelos
+                        atualizarStatusChave('alert');
+                        document.getElementById('key-badge').className = 'key-badge alert';
+                        display.innerHTML = `
+                            <div style="text-align:center; padding:20px; color:#e74c3c;">
+                                <i class="fa-solid fa-key" style="font-size:28px; display:block; margin-bottom:10px;"></i>
+                                <b>Chave API inválida ou sem permissão</b><br>
+                                <span style="font-size:13px; color:#888; display:block; margin:8px 0;">${e.msg}</span>
+                                <button onclick="toggleConfig()" style="margin-top:12px; background:var(--gold); border:none; padding:11px 22px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px;">
+                                    <i class="fa-solid fa-key"></i> Inserir Nova Chave
+                                </button>
+                            </div>`;
+                        document.getElementById('config-panel').style.display = 'block';
+                        document.getElementById('api-key-input').value = '';
+                        atualizarStatusChave('alert');
+                        btn.disabled = false;
+                        btn.innerHTML = "<i class='fa-solid fa-wand-magic-sparkles'></i> GERAR SERMÃO";
+                        return;
+                    }
+                    ultimoErro = e;
+                    break; // erro desconhecido neste modelo, tenta próximo
+                }
             }
-        } finally {
+            if (textoFinal) break; // saiu com sucesso
+            // Pequena pausa antes de tentar modelo alternativo
+            if (m < MODELOS.length - 1) await delay(1500);
+        }
+
+        if (!textoFinal) {
+            // Todos os modelos falharam
+            const isSobrecarga = ultimoErro?.tipo === 'SOBRECARGA' ||
+                (ultimoErro?.msg && ultimoErro.msg.toLowerCase().includes('demand'));
+            display.innerHTML = isSobrecarga
+                ? `<div style="text-align:center; padding:20px; color:#f39c12;">
+                    <i class="fa-solid fa-server" style="font-size:28px; display:block; margin-bottom:10px;"></i>
+                    <b>Servidores do Google sobrecarregados</b><br>
+                    <span style="font-size:13px; color:#888; display:block; margin:8px 0;">
+                        Todos os modelos disponíveis estão com alta demanda no momento.<br>
+                        Isso é temporário — aguarde alguns minutos e tente novamente.
+                    </span>
+                    <button onclick="gerarSermao()" style="margin-top:12px; background:#f39c12; border:none; padding:11px 22px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px; color:#000;">
+                        <i class="fa-solid fa-rotate-right"></i> Tentar Novamente
+                    </button>
+                  </div>`
+                : `<div style="text-align:center; padding:20px; color:#e74c3c;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; display:block; margin-bottom:10px;"></i>
+                    <b>Erro inesperado</b><br>
+                    <span style="font-size:13px; color:#888;">${ultimoErro?.msg || 'Tente novamente.'}</span>
+                  </div>`;
             btn.disabled = false;
             btn.innerHTML = "<i class='fa-solid fa-wand-magic-sparkles'></i> GERAR SERMÃO";
+            return;
         }
+
+        // ── Sucesso ──
+        NOMES_PROIBIDOS.forEach(nome => {
+            textoFinal = textoFinal.replace(new RegExp(nome, "gi"), MEU_NOME);
+        });
+        const textoFormatado = textoFinal.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+        display.innerHTML = `
+            <div style="text-align:center; margin-bottom:16px;">
+                <h2 style="margin:0; color:var(--gold); font-size:20px; text-transform:uppercase;">${tema}</h2>
+                <p style="margin:6px 0 0; font-size:13px; color:#888;">
+                    Pregador: ${MEU_NOME} &nbsp;|&nbsp; Estilo: ${referencia}
+                </p>
+                <p style="margin:4px 0 0; font-size:11px; color:#555;">Gerado com ${modeloUsado}</p>
+            </div>
+            <hr style="border-top:1px solid #333; margin-bottom:16px;">
+            ${textoFormatado}`;
+
+        salvarNoHistorico(tema.toUpperCase(), display.innerHTML);
+
+        btn.disabled = false;
+        btn.innerHTML = "<i class='fa-solid fa-wand-magic-sparkles'></i> GERAR SERMÃO";
     }
 
     // ── Histórico Local ──
