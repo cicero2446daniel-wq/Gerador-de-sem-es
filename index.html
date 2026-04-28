@@ -62,12 +62,34 @@
         #roteiro h2 { color: var(--gold); margin-bottom: 6px; font-size: 20px; }
         #roteiro hr { border-top: 1px solid #333; margin: 16px 0; }
 
-        .settings-btn { position: absolute; top: 20px; right: 20px; color: var(--gold); cursor: pointer; font-size: 20px; z-index: 10; }
-        #config-panel {
-            display: none; background: #222; padding: 15px; border-radius: 10px;
-            margin-bottom: 15px; border: 1px dashed var(--gold); animation: fadeIn 0.3s;
+        .settings-btn {
+            position: absolute; top: 20px; right: 20px; color: var(--gold);
+            cursor: pointer; font-size: 20px; z-index: 10; display: flex; align-items: center;
         }
-        #config-panel label { color: var(--gold); }
+        .key-badge {
+            position: absolute; top: -5px; right: -5px;
+            width: 11px; height: 11px; border-radius: 50%;
+            border: 2px solid var(--card); display: none;
+        }
+        .key-badge.alert { background: #e74c3c; display: block; }
+        .key-badge.ok    { background: #2ecc71; display: block; }
+
+        #config-panel {
+            display: none; background: #1a1a1a; padding: 18px; border-radius: 12px;
+            margin-bottom: 15px; border: 1px solid var(--gold); animation: fadeIn 0.3s;
+        }
+        #config-panel label { color: var(--gold); font-size: 12px; margin-bottom: 8px; display:block; }
+
+        .key-status-bar {
+            display: flex; align-items: center; gap: 8px;
+            background: #111; border-radius: 8px; padding: 10px 14px;
+            margin-bottom: 12px; font-size: 13px;
+        }
+        .key-status-bar .dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+        .status-ok    .dot { background: #2ecc71; }
+        .status-alert .dot { background: #e74c3c; }
+        .status-none  .dot { background: #888; }
+        .key-status-bar span { color: #aaa; }
 
         #modalHistorico {
             display: none; position: fixed; top: 0; left: 0;
@@ -104,23 +126,43 @@
 <body onload="inicializarApp()">
 
 <div class="container">
-    <i class="fa-solid fa-cog settings-btn" onclick="toggleConfig()" title="Configurações da API"></i>
+    <div class="settings-btn" onclick="toggleConfig()" title="Configurações da API" style="position:absolute; top:20px; right:20px;">
+        <i class="fa-solid fa-cog"></i>
+        <span class="key-badge" id="key-badge"></span>
+    </div>
 
     <h1><i class="fa-solid fa-bible"></i> Sermões Pro</h1>
     <p style="text-align:center; font-size:14px; color:#888; margin-bottom:20px;">Pregador: Cicero Daniel</p>
 
     <!-- Painel de configuração -->
     <div id="config-panel">
-        <label>Chave API Gemini:</label>
+        <label><i class="fa-solid fa-key"></i> &nbsp;CHAVE API GEMINI</label>
+
+        <!-- Status atual -->
+        <div class="key-status-bar status-none" id="key-status-bar">
+            <span class="dot"></span>
+            <span id="key-status-text">Verificando...</span>
+        </div>
+
         <input type="password" id="api-key-input"
-               style="width:100%; background:#000; color:#00ff00; border:1px solid #444; padding:12px; border-radius:8px; margin-top:5px; box-sizing:border-box; font-size:14px;"
-               placeholder="Cole sua chave do Google AI Studio aqui...">
-        <button onclick="saveKey()"
-                style="margin-top:10px; width:100%; background:var(--gold); border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:15px;">
-            SALVAR CHAVE
-        </button>
-        <p style="color:#666; font-size:11px; margin-top:8px; text-align:center;">
-            Chave gratuita em <strong style="color:var(--gold)">aistudio.google.com</strong>
+               style="width:100%; background:#000; color:#00ff00; border:1px solid #444; padding:12px; border-radius:8px; margin-bottom:10px; box-sizing:border-box; font-size:14px; font-family:monospace; letter-spacing:1px;"
+               placeholder="Cole sua chave do Google AI Studio aqui..."
+               oninput="document.getElementById('btn-salvar-chave').style.background='#c5a059'">
+
+        <div style="display:flex; gap:8px;">
+            <button id="btn-salvar-chave" onclick="saveKey()"
+                    style="flex:1; background:var(--gold); border:none; padding:13px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:15px; transition:0.2s;">
+                <i class="fa-solid fa-floppy-disk"></i> SALVAR CHAVE
+            </button>
+            <button onclick="removerChave()" title="Apagar chave salva"
+                    style="background:#c0392b; border:none; padding:13px 16px; border-radius:8px; cursor:pointer; color:#fff; font-size:15px;">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </div>
+
+        <p style="color:#555; font-size:11px; margin-top:10px; text-align:center; line-height:1.6;">
+            Chave gratuita em <strong style="color:var(--gold)">aistudio.google.com</strong><br>
+            <span style="color:#444;">A chave é armazenada apenas neste dispositivo.</span>
         </p>
     </div>
 
@@ -192,7 +234,12 @@
     // ── Init ──
     function inicializarApp() {
         atualizarInterfaceHistorico();
-        if (!MINHA_CHAVE) {
+        // Atualiza o badge da engrenagem conforme estado da chave
+        const badge = document.getElementById('key-badge');
+        if (MINHA_CHAVE) {
+            badge.className = 'key-badge ok';
+        } else {
+            badge.className = 'key-badge alert';
             document.getElementById('roteiro').innerHTML = `
                 <div style="color:orange; text-align:center; padding:20px;">
                     <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; display:block; margin-bottom:10px;"></i>
@@ -202,25 +249,46 @@
     }
 
     // ── Config ──
+    function atualizarStatusChave(estado) {
+        // estado: 'ok' | 'alert' | 'none'
+        const bar    = document.getElementById('key-status-bar');
+        const txt    = document.getElementById('key-status-text');
+        const badge  = document.getElementById('key-badge');
+        const msgs   = { ok: '✅ Chave ativa', alert: '❌ Chave inválida ou expirada', none: '⚠️ Nenhuma chave configurada' };
+        bar.className = 'key-status-bar status-' + estado;
+        txt.textContent = msgs[estado];
+        badge.className = 'key-badge ' + (estado === 'ok' ? 'ok' : 'alert');
+    }
+
     function toggleConfig() {
         const p = document.getElementById('config-panel');
-        p.style.display = p.style.display === 'block' ? 'none' : 'block';
-        if (p.style.display === 'block' && MINHA_CHAVE) {
-            document.getElementById('api-key-input').value = MINHA_CHAVE;
+        const aberto = p.style.display === 'block';
+        p.style.display = aberto ? 'none' : 'block';
+        if (!aberto) {
+            // Ao abrir: preenche campo se já há chave, e mostra status
+            const input = document.getElementById('api-key-input');
+            if (MINHA_CHAVE) input.value = MINHA_CHAVE;
+            atualizarStatusChave(MINHA_CHAVE ? 'ok' : 'none');
         }
     }
 
     function saveKey() {
         const k = document.getElementById('api-key-input').value.trim();
-        if (k) {
-            localStorage.setItem('sermoespro_key', k);
-            MINHA_CHAVE = k;
-            alert("✅ Chave salva com sucesso!");
-            toggleConfig();
-            inicializarApp();
-        } else {
-            alert("Cole uma chave válida!");
-        }
+        if (!k) { alert("Cole uma chave válida antes de salvar!"); return; }
+        localStorage.setItem('sermoespro_key', k);
+        MINHA_CHAVE = k;
+        atualizarStatusChave('ok');
+        document.getElementById('config-panel').style.display = 'none';
+        inicializarApp();
+    }
+
+    function removerChave() {
+        if (!confirm("Deseja realmente apagar a chave API salva?")) return;
+        localStorage.removeItem('sermoespro_key');
+        MINHA_CHAVE = "";
+        document.getElementById('api-key-input').value = "";
+        atualizarStatusChave('none');
+        inicializarApp();
     }
 
     // ── Gerar Sermão (Gemini) ──
@@ -287,13 +355,41 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
 
         } catch (e) {
             console.error(e);
-            display.innerHTML = `
-                <div style="text-align:center; padding:20px; color:#e74c3c;">
-                    <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; display:block; margin-bottom:10px;"></i>
-                    <b>Erro na conexão</b><br>
-                    <span style="font-size:13px; color:#888;">${e.message}</span><br><br>
-                    <span style="font-size:12px; color:#666;">Verifique sua chave API ⚙️ ou conexão com a internet.</span>
-                </div>`;
+            // Detecta erro de autenticação/chave inválida
+            const isAuthError = e.message && (
+                e.message.includes('API_KEY') ||
+                e.message.includes('API key') ||
+                e.message.includes('INVALID_ARGUMENT') ||
+                e.message.includes('403') ||
+                e.message.includes('401') ||
+                e.message.includes('invalid')
+            );
+            if (isAuthError) {
+                atualizarStatusChave('alert');
+                document.getElementById('key-badge').className = 'key-badge alert';
+                display.innerHTML = `
+                    <div style="text-align:center; padding:20px; color:#e74c3c;">
+                        <i class="fa-solid fa-key" style="font-size:28px; display:block; margin-bottom:10px;"></i>
+                        <b>Chave API inválida ou expirada</b><br>
+                        <span style="font-size:13px; color:#888; display:block; margin:8px 0;">Insira uma nova chave para continuar.</span>
+                        <button onclick="toggleConfig()" style="margin-top:10px; background:var(--gold); border:none; padding:11px 22px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px;">
+                            <i class="fa-solid fa-cog"></i> Atualizar Chave API
+                        </button>
+                    </div>`;
+                // Abre o painel automaticamente
+                const p = document.getElementById('config-panel');
+                p.style.display = 'block';
+                document.getElementById('api-key-input').value = '';
+                atualizarStatusChave('alert');
+            } else {
+                display.innerHTML = `
+                    <div style="text-align:center; padding:20px; color:#e74c3c;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; display:block; margin-bottom:10px;"></i>
+                        <b>Erro na conexão</b><br>
+                        <span style="font-size:13px; color:#888;">${e.message}</span><br><br>
+                        <span style="font-size:12px; color:#666;">Verifique sua chave API ⚙️ ou conexão com a internet.</span>
+                    </div>`;
+            }
         } finally {
             btn.disabled = false;
             btn.innerHTML = "<i class='fa-solid fa-wand-magic-sparkles'></i> GERAR SERMÃO";
