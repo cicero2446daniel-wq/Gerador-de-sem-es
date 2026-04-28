@@ -320,28 +320,72 @@ Use a seguinte estrutura com estes títulos exatos em negrito:
 
 Escreva em português brasileiro. Linguagem clara, impactante e que toque o coração das pessoas.`;
 
-        // Modelos em ordem de preferência — se um estiver sobrecarregado, tenta o próximo
+        // ── Modelos em ordem de preferência — fallback automático ──
+        // Se um modelo estiver sobrecarregado ou com quota, tenta o próximo automaticamente
         const MODELOS = [
-            'gemini-2.5-flash',
-            'gemini-1.5-flash',
-            'gemini-1.5-flash-8b'
+            { id: 'gemini-2.5-flash-preview-05-20', label: 'Gemini 2.5 Flash' },
+            { id: 'gemini-2.5-flash',               label: 'Gemini 2.5 Flash' },
+            { id: 'gemini-2.0-flash',               label: 'Gemini 2.0 Flash' },
+            { id: 'gemini-2.0-flash-lite',          label: 'Gemini 2.0 Flash Lite' },
+            { id: 'gemini-1.5-pro',                 label: 'Gemini 1.5 Pro' },
+            { id: 'gemini-1.5-flash',               label: 'Gemini 1.5 Flash' },
+            { id: 'gemini-1.5-flash-8b',            label: 'Gemini 1.5 Flash 8B' }
         ];
 
         const delay = ms => new Promise(r => setTimeout(r, ms));
 
+        // Detecta se é REALMENTE erro de chave inválida (não de quota/modelo)
+        function isErroChaveReal(status, data) {
+            const msg = (data.error?.message || '').toLowerCase();
+            const errStatus = data.error?.status || '';
+            // 401 é sempre chave inválida
+            if (status === 401) return true;
+            // 403 só é chave inválida se a mensagem mencionar explicitamente a key
+            if (status === 403 && (msg.includes('api key not valid') || msg.includes('api key expired') || msg.includes('invalid api key'))) return true;
+            // UNAUTHENTICATED = chave inválida de fato
+            if (errStatus === 'UNAUTHENTICATED') return true;
+            return false;
+        }
+
+        // Detecta sobrecarga/quota (deve tentar próximo modelo)
+        function isSobrecarga(status, data) {
+            const msg = (data.error?.message || '').toLowerCase();
+            const errStatus = data.error?.status || '';
+            if (status === 503 || status === 429) return true;
+            if (errStatus === 'UNAVAILABLE' || errStatus === 'RESOURCE_EXHAUSTED') return true;
+            if (msg.includes('high demand') || msg.includes('overloaded') || msg.includes('quota')) return true;
+            return false;
+        }
+
+        // Detecta modelo indisponível nesta chave (tenta próximo, mas NÃO é erro de chave)
+        function isModeloIndisponivel(status, data) {
+            const msg = (data.error?.message || '').toLowerCase();
+            const errStatus = data.error?.status || '';
+            // 400 INVALID_ARGUMENT pode ser modelo não acessível, não chave errada
+            if ((status === 400 || status === 403) && (errStatus === 'INVALID_ARGUMENT' || errStatus === 'PERMISSION_DENIED' || msg.includes('not found') || msg.includes('not supported') || msg.includes('preview'))) return true;
+            return false;
+        }
+
         let textoFinal = null;
         let ultimoErro = null;
         let modeloUsado = '';
+        let authFailed  = false;
 
         for (let m = 0; m < MODELOS.length; m++) {
-            const modelo = MODELOS[m];
-            // Tenta até 2 vezes por modelo em caso de 503
+            if (authFailed) break;
+            const { id: modelo, label: modeloLabel } = MODELOS[m];
+
+            // Tenta até 2 vezes por modelo em caso de sobrecarga
             for (let tentativa = 1; tentativa <= 2; tentativa++) {
                 try {
                     display.innerHTML = `<div style='text-align:center; padding:30px; color:#888;'>
                         <i class='fa-solid fa-circle-notch fa-spin' style='font-size:28px; color:var(--gold);'></i>
                         <br><br>
-                        <span style='font-size:13px;'>Modelo: <b style='color:var(--gold)'>${modelo}</b>${tentativa > 1 ? ' — tentativa ' + tentativa : ''}</span>
+                        <span style='font-size:13px;'>
+                            Tentando: <b style='color:var(--gold)'>${modeloLabel}</b>
+                            ${tentativa > 1 ? ' <span style="color:#f39c12;">— retry ' + tentativa + '</span>' : ''}
+                        </span>
+                        <br><span style='font-size:11px; color:#555; margin-top:6px; display:block;'>${m + 1} de ${MODELOS.length} opções disponíveis</span>
                     </div>`;
 
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${MINHA_CHAVE}`;
@@ -353,44 +397,52 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
 
                     const data = await response.json();
 
-                    // ── Erro de autenticação (chave inválida/expirada) ──
-                    if (response.status === 400 || response.status === 401 || response.status === 403 ||
-                        (data.error && (data.error.status === 'INVALID_ARGUMENT' || data.error.status === 'PERMISSION_DENIED' ||
-                         (data.error.message && (data.error.message.toLowerCase().includes('api key') || data.error.message.toLowerCase().includes('api_key')))))) {
-                        throw { tipo: 'AUTH', msg: data.error?.message || 'Chave inválida ou sem permissão.' };
+                    // ── Chave REALMENTE inválida — para tudo ──
+                    if (isErroChaveReal(response.status, data)) {
+                        authFailed = true;
+                        throw { tipo: 'AUTH', msg: data.error?.message || 'Chave inválida ou expirada.' };
                     }
 
-                    // ── Servidor sobrecarregado (503) — tenta próxima vez/modelo ──
-                    if (response.status === 503 || response.status === 429 ||
-                        (data.error && (data.error.status === 'UNAVAILABLE' || data.error.status === 'RESOURCE_EXHAUSTED' ||
-                         (data.error.message && data.error.message.toLowerCase().includes('high demand'))))) {
+                    // ── Modelo indisponível nesta chave — pula para próximo modelo ──
+                    if (isModeloIndisponivel(response.status, data)) {
+                        ultimoErro = { tipo: 'MODELO', msg: `Modelo ${modeloLabel} não disponível.` };
+                        break; // vai pro próximo modelo
+                    }
+
+                    // ── Sobrecarga — retry e depois próximo modelo ──
+                    if (isSobrecarga(response.status, data)) {
                         ultimoErro = { tipo: 'SOBRECARGA', msg: data.error?.message || 'Servidor sobrecarregado.' };
                         if (tentativa < 2) {
                             display.innerHTML = `<div style='text-align:center; padding:20px; color:#f39c12;'>
-                                <i class='fa-solid fa-circle-notch fa-spin'></i> Servidor ocupado, tentando novamente em 4s...
+                                <i class='fa-solid fa-circle-notch fa-spin'></i>
+                                <b style='color:var(--gold)'>${modeloLabel}</b> ocupado — tentando novamente em 4s...
                             </div>`;
                             await delay(4000);
                         }
-                        continue; // tenta de novo ou próximo modelo
+                        continue;
                     }
 
                     if (data.error) throw { tipo: 'GERAL', msg: data.error.message };
 
-                    textoFinal = data.candidates[0].content.parts[0].text;
-                    modeloUsado = modelo;
-                    break; // sucesso!
+                    textoFinal = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!textoFinal) throw { tipo: 'GERAL', msg: 'Resposta vazia do servidor.' };
+                    modeloUsado = modeloLabel;
+                    break; // ✅ sucesso!
 
                 } catch (e) {
-                    if (e.tipo === 'AUTH') {
-                        // Erro de chave: não adianta tentar outros modelos
+                    if (e.tipo === 'AUTH' || authFailed) {
+                        // Chave inválida confirmada — exibe erro e para
                         atualizarStatusChave('alert');
                         document.getElementById('key-badge').className = 'key-badge alert';
                         display.innerHTML = `
                             <div style="text-align:center; padding:20px; color:#e74c3c;">
                                 <i class="fa-solid fa-key" style="font-size:28px; display:block; margin-bottom:10px;"></i>
-                                <b>Chave API inválida ou sem permissão</b><br>
+                                <b>Chave API inválida ou expirada</b><br>
                                 <span style="font-size:13px; color:#888; display:block; margin:8px 0;">${e.msg}</span>
-                                <button onclick="toggleConfig()" style="margin-top:12px; background:var(--gold); border:none; padding:11px 22px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px;">
+                                <span style="font-size:11px; color:#555; display:block; margin-bottom:12px;">
+                                    Acesse <b style="color:var(--gold)">aistudio.google.com</b>, gere uma nova chave e cole abaixo.
+                                </span>
+                                <button onclick="toggleConfig()" style="background:var(--gold); border:none; padding:11px 22px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px;">
                                     <i class="fa-solid fa-key"></i> Inserir Nova Chave
                                 </button>
                             </div>`;
@@ -402,24 +454,24 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
                         return;
                     }
                     ultimoErro = e;
-                    break; // erro desconhecido neste modelo, tenta próximo
+                    break; // erro neste modelo, tenta próximo
                 }
             }
-            if (textoFinal) break; // saiu com sucesso
-            // Pequena pausa antes de tentar modelo alternativo
-            if (m < MODELOS.length - 1) await delay(1500);
+            if (textoFinal) break;
+            // Pausa antes do próximo modelo
+            if (m < MODELOS.length - 1 && !authFailed) await delay(1000);
         }
 
         if (!textoFinal) {
             // Todos os modelos falharam
-            const isSobrecarga = ultimoErro?.tipo === 'SOBRECARGA' ||
+            const isSobrecargaFinal = ultimoErro?.tipo === 'SOBRECARGA' || ultimoErro?.tipo === 'MODELO' ||
                 (ultimoErro?.msg && ultimoErro.msg.toLowerCase().includes('demand'));
-            display.innerHTML = isSobrecarga
+            display.innerHTML = isSobrecargaFinal
                 ? `<div style="text-align:center; padding:20px; color:#f39c12;">
                     <i class="fa-solid fa-server" style="font-size:28px; display:block; margin-bottom:10px;"></i>
                     <b>Servidores do Google sobrecarregados</b><br>
                     <span style="font-size:13px; color:#888; display:block; margin:8px 0;">
-                        Todos os modelos disponíveis estão com alta demanda no momento.<br>
+                        Todos os 7 modelos disponíveis estão com alta demanda agora.<br>
                         Isso é temporário — aguarde alguns minutos e tente novamente.
                     </span>
                     <button onclick="gerarSermao()" style="margin-top:12px; background:#f39c12; border:none; padding:11px 22px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px; color:#000;">
