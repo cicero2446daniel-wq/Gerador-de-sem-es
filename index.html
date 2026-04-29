@@ -1,297 +1,339 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html class="dark" lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gerador de Sermões Pro v3</title>
+    <title>Sermões Pro v3 - Premium</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b0b0b">
+    
+    <!-- Dependências -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "gold": "#c5a059",
+                        "dark-bg": "#0b0b0b",
+                        "dark-card": "#161616",
+                        "dark-input": "#0b0b0b",
+                        "dark-border": "#333333",
+                        "dark-surface": "#1e1f26",
+                    },
+                    "fontFamily": {
+                        "inter": ["Inter", "sans-serif"],
+                    }
+                },
+            },
+        }
+    </script>
     <style>
-        :root { --bg: #0b0b0b; --gold: #c5a059; --card: #161616; --text: #f0f0f0; --input: #252525; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; -webkit-font-smoothing: antialiased; }
-
-        .container { max-width: 600px; margin: auto; background: var(--card); border: 1px solid var(--gold); border-radius: 20px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); position: relative; box-sizing: border-box; }
-
-        h1 { color: var(--gold); text-align: center; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
-
-        label { display: block; color: #888; font-size: 11px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px; }
-
-        textarea, select {
-            width: 100%; padding: 16px; background: var(--input); color: white;
-            border: 1px solid #444; border-radius: 12px; margin-bottom: 15px;
-            font-size: 17px; outline: none; box-sizing: border-box; resize: none;
-            font-family: 'Segoe UI', sans-serif;
-        }
-        textarea:focus, select:focus { border-color: var(--gold); }
-        select option { background: #252525; }
-
-        .btn-gerar {
-            width: 100%; padding: 20px; background: var(--gold); color: #000;
-            border: none; border-radius: 12px; font-weight: bold; cursor: pointer;
-            font-size: 17px; text-transform: uppercase;
-            display: flex; justify-content: center; align-items: center; gap: 10px;
-            transition: 0.3s; margin-bottom: 12px;
-        }
-        .btn-gerar:active { transform: scale(0.98); }
-        .btn-gerar:disabled { background: #444; color: #888; cursor: not-allowed; }
-
-        .btns-secundarios {
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 5px;
-        }
-        .btn-sec {
-            padding: 14px; border: none; border-radius: 12px; cursor: pointer;
-            font-weight: bold; font-size: 13px; text-transform: uppercase;
-            display: flex; align-items: center; justify-content: center; gap: 7px;
-            transition: 0.2s;
-        }
-        .btn-sec:active { transform: scale(0.97); }
-        .btn-salvar  { background: #2980b9; color: #fff; }
-        .btn-hist    { background: #8e44ad; color: #fff; }
-        .btn-pdf     { background: #27ae60; color: #fff; }
-
-        #roteiro {
-            margin-top: 20px; padding: 20px;
-            background: rgba(255,255,255,0.02);
-            border-radius: 12px; border-left: 5px solid var(--gold);
-            line-height: 1.85; font-size: 18px; color: #ddd;
-            white-space: pre-wrap; min-height: 80px;
-        }
-        #roteiro b { color: var(--gold); font-weight: 700; }
-        #roteiro h2 { color: var(--gold); margin-bottom: 6px; font-size: 20px; }
-        #roteiro hr { border-top: 1px solid #333; margin: 16px 0; }
-
-        .settings-btn {
-            position: absolute; top: 20px; right: 20px; color: var(--gold);
-            cursor: pointer; font-size: 20px; z-index: 10; display: flex; align-items: center;
-        }
-        .key-badge {
-            position: absolute; top: -5px; right: -5px;
-            width: 11px; height: 11px; border-radius: 50%;
-            border: 2px solid var(--card); display: none;
-        }
-        .key-badge.alert { background: #e74c3c; display: block; }
-        .key-badge.ok    { background: #2ecc71; display: block; }
-
-        #config-panel {
-            display: none; background: #1a1a1a; padding: 18px; border-radius: 12px;
-            margin-bottom: 15px; border: 1px solid var(--gold); animation: fadeIn 0.3s;
-        }
-        #config-panel label { color: var(--gold); font-size: 12px; margin-bottom: 8px; display:block; }
-
-        .key-status-bar {
-            display: flex; align-items: center; gap: 8px;
-            background: #111; border-radius: 8px; padding: 10px 14px;
-            margin-bottom: 12px; font-size: 13px;
-        }
-        .key-status-bar .dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-        .status-ok    .dot { background: #2ecc71; }
-        .status-alert .dot { background: #e74c3c; }
-        .status-none  .dot { background: #888; }
-        .key-status-bar span { color: #aaa; }
-
-        #modalHistorico {
-            display: none; position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.94); z-index: 1000;
-            padding: 20px; overflow-y: auto; backdrop-filter: blur(6px);
-        }
-        .modal-inner { max-width: 600px; margin: 30px auto; }
-        .item-lista {
-            background: #1a1a1a; padding: 16px 18px; border-radius: 12px;
-            margin-bottom: 10px; display: flex; justify-content: space-between;
-            align-items: center; border: 1px solid #333; transition: 0.2s;
-        }
-        .item-lista:hover { border-color: var(--gold); }
-        .item-lista strong { color: var(--gold); font-size: 15px; }
-        .item-data { font-size: 11px; color: #666; margin-top: 2px; }
-        .btn-abrir  { background: var(--gold); color: #000; padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 12px; }
-        .btn-excluir { background: #e74c3c; color: white; padding: 8px 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 12px; }
-
-        .history-section { margin-top: 30px; max-width: 600px; margin-left: auto; margin-right: auto; border-top: 1px solid #333; padding-top: 20px; }
-        .history-item { background: #1a1a1a; padding: 16px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; cursor: pointer; transition: 0.2s; font-size: 15px; }
-        .history-item:hover { border-color: var(--gold); }
-        .badge { background: var(--gold); color: black; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: bold; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        @media(max-width: 420px) {
-            h1 { font-size: 1.4rem; }
-            .btns-secundarios { grid-template-columns: 1fr 1fr; }
-            .btn-pdf { grid-column: span 2; }
-        }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .gold-gradient { background: linear-gradient(135deg, #c5a059 0%, #967a44 100%); }
+        .glass-panel { background: rgba(22, 22, 22, 0.8); backdrop-filter: blur(12px); }
+        #roteiro { white-space: pre-wrap; line-height: 1.8; }
+        #roteiro b { color: #c5a059; font-weight: 700; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0b0b; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c5a059; }
     </style>
 </head>
-<body onload="inicializarApp()">
+<body class="bg-dark-bg text-gray-200 font-inter min-h-screen" onload="inicializarApp()">
 
-<div class="container">
-    <div class="settings-btn" onclick="toggleConfig()" title="Configurações da API" style="position:absolute; top:20px; right:20px;">
-        <i class="fa-solid fa-cog"></i>
-        <span class="key-badge" id="key-badge"></span>
-    </div>
-
-    <h1><i class="fa-solid fa-bible"></i> Sermões Pro</h1>
-    <p style="text-align:center; font-size:14px; color:#888; margin-bottom:20px;">Pregador: Cicero Daniel</p>
-
-    <!-- Painel de configuração -->
-    <div id="config-panel">
-        <label><i class="fa-solid fa-key"></i> &nbsp;CHAVE API GEMINI</label>
-
-        <!-- Status atual -->
-        <div class="key-status-bar status-none" id="key-status-bar">
-            <span class="dot"></span>
-            <span id="key-status-text">Verificando...</span>
+<!-- Header TopBar -->
+<header class="bg-dark-bg text-gold border-b border-dark-border shadow-2xl flex justify-between items-center px-6 py-4 w-full sticky top-0 z-50">
+    <div class="flex items-center gap-4">
+        <div class="text-xl font-black tracking-widest flex items-center gap-2">
+            <i class="fa-solid fa-bible text-gold"></i>
+            <span class="hidden sm:inline">SERMÕES PRO</span>
         </div>
+    </div>
+    <div class="flex items-center gap-3">
+        <button onclick="toggleConfig()" class="text-gray-500 hover:text-gold transition-colors relative p-2" title="Configurações">
+            <span class="material-symbols-outlined">settings</span>
+            <span id="key-badge" class="absolute top-1 right-1 w-2 h-2 rounded-full bg-gray-500"></span>
+        </button>
+        <button onclick="abrirHistorico()" class="text-gray-500 hover:text-gold transition-colors p-2" title="Histórico">
+            <span class="material-symbols-outlined">history</span>
+        </button>
+        <div class="h-8 w-8 rounded-full bg-dark-surface flex items-center justify-center border border-dark-border">
+            <span class="material-symbols-outlined text-sm">account_circle</span>
+        </div>
+    </div>
+</header>
 
-        <input type="password" id="api-key-input"
-               style="width:100%; background:#000; color:#00ff00; border:1px solid #444; padding:12px; border-radius:8px; margin-bottom:10px; box-sizing:border-box; font-size:14px; font-family:monospace; letter-spacing:1px;"
-               placeholder="Cole sua chave do Google AI Studio aqui..."
-               oninput="document.getElementById('btn-salvar-chave').style.background='#c5a059'">
-
-        <div style="display:flex; gap:8px;">
-            <button id="btn-salvar-chave" onclick="saveKey()"
-                    style="flex:1; background:var(--gold); border:none; padding:13px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:15px; transition:0.2s;">
-                <i class="fa-solid fa-floppy-disk"></i> SALVAR CHAVE
+<div class="flex">
+    <!-- SideNavBar (Desktop) -->
+    <aside class="hidden md:flex bg-dark-card h-screen w-64 border-r border-dark-border fixed left-0 top-[65px] flex-col pt-8 z-40">
+        <div class="px-6 mb-8">
+            <div class="bg-dark-surface p-4 rounded-xl border border-dark-border flex items-center gap-3">
+                <div class="h-10 w-10 rounded-full gold-gradient flex items-center justify-center text-dark-bg font-bold">CD</div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wider text-gold">Pregador</p>
+                    <p class="text-xs text-gray-400">Cicero Daniel</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 space-y-1 px-3">
+            <div class="bg-dark-surface text-gold border-l-4 border-gold px-4 py-3 flex items-center gap-3 cursor-pointer">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                <span class="text-sm font-medium uppercase tracking-wider">Novo Sermão</span>
+            </div>
+            <div onclick="abrirHistorico()" class="text-gray-400 hover:bg-dark-surface hover:text-white px-4 py-3 flex items-center gap-3 cursor-pointer transition-all">
+                <span class="material-symbols-outlined">menu_book</span>
+                <span class="text-sm font-medium uppercase tracking-wider">Biblioteca</span>
+            </div>
+        </nav>
+        <div class="px-6 py-8 border-t border-dark-border mt-auto">
+            <button onclick="gerarSermao()" class="gold-gradient w-full py-3 rounded-lg text-dark-bg font-bold text-sm uppercase tracking-widest transition-all hover:brightness-110 active:scale-95">
+                Gerar Agora
             </button>
-            <button onclick="removerChave()" title="Apagar chave salva"
-                    style="background:#c0392b; border:none; padding:13px 16px; border-radius:8px; cursor:pointer; color:#fff; font-size:15px;">
-                <i class="fa-solid fa-trash"></i>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 md:ml-64 p-4 md:p-8 pb-20 md:pb-8">
+        <div class="max-w-[1200px] mx-auto space-y-8">
+            
+            <!-- Welcome Header -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-dark-card border border-dark-border rounded-2xl p-8 relative overflow-hidden group">
+                    <div class="relative z-10">
+                        <h1 class="text-3xl md:text-4xl font-bold text-gold mb-2">Componha com Autoridade</h1>
+                        <p class="text-gray-400 text-lg max-w-lg">Transforme sua inspiração em mensagens estruturadas e profundas com a ajuda da inteligência artificial de elite.</p>
+                    </div>
+                    <div class="absolute right-[-5%] top-[-5%] opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="material-symbols-outlined text-[200px]">auto_awesome</span>
+                    </div>
+                </div>
+
+                <!-- Mini API Status Panel -->
+                <div class="bg-dark-card border border-dark-border rounded-2xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gold font-bold flex items-center gap-2 uppercase text-xs tracking-widest">
+                            <span class="material-symbols-outlined text-sm">key</span> API Status
+                        </h3>
+                        <div id="status-pill" class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-500/10 border border-gray-500/20 text-[10px] text-gray-500 font-bold uppercase">
+                            <span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span> Verificando
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4">A chave API é necessária para gerar conteúdos via Google Gemini.</p>
+                    <button onclick="toggleConfig()" class="w-full py-2 bg-dark-surface hover:bg-dark-border border border-dark-border rounded-lg text-xs font-medium transition-all">
+                        Configurar Chave
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Generation Grid -->
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                
+                <!-- Left: Control Panel -->
+                <div class="xl:col-span-4 space-y-6">
+                    <div class="bg-dark-card border border-dark-border rounded-2xl p-6 space-y-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Tema ou Versículo Base</label>
+                                <textarea id="tema" class="w-full bg-dark-input border border-dark-border rounded-xl px-4 py-3 text-sm min-h-[120px] focus:border-gold focus:ring-1 focus:ring-gold/30 focus:outline-none transition-all placeholder:text-gray-700" placeholder="Ex: Fé que move montanhas (Mateus 17:20)..."></textarea>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Estilo de Referência</label>
+                                <select id="estiloReferencia" class="w-full bg-dark-input border border-dark-border rounded-xl px-4 py-3 text-sm focus:border-gold focus:ring-0 focus:outline-none appearance-none cursor-pointer">
+                                    <option value="Pr. Cláudio Duarte">Pr. Cláudio Duarte</option>
+                                    <option value="Pr. Hernandes Dias Lopes">Pr. Hernandes Dias Lopes</option>
+                                    <option value="Pr. Isaias de Oliveira">Pr. Isaias de Oliveira</option>
+                                    <option value="Miss. Edmeia Williams">Miss. Edmeia Williams</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button id="btn-main" onclick="gerarSermao()" class="gold-gradient w-full py-4 rounded-xl text-dark-bg font-extrabold text-lg uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-transform flex items-center justify-center gap-3">
+                            <span class="material-symbols-outlined" data-weight="fill">auto_awesome</span>
+                            Gerar Sermão
+                        </button>
+                    </div>
+
+                    <!-- Secondary Actions -->
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="salvarNoBanco()" class="bg-dark-card border border-dark-border p-4 rounded-xl flex flex-col items-center gap-2 hover:bg-dark-surface transition-all group">
+                            <span class="material-symbols-outlined text-gold">cloud_upload</span>
+                            <span class="text-[10px] font-bold uppercase text-gray-500 group-hover:text-gold">Nuvem</span>
+                        </button>
+                        <button onclick="baixarPDF()" class="bg-dark-card border border-dark-border p-4 rounded-xl flex flex-col items-center gap-2 hover:bg-dark-surface transition-all group">
+                            <span class="material-symbols-outlined text-gold">picture_as_pdf</span>
+                            <span class="text-[10px] font-bold uppercase text-gray-500 group-hover:text-gold">PDF</span>
+                        </button>
+                        <button onclick="copiarTexto()" class="bg-dark-card border border-dark-border p-4 rounded-xl flex flex-col items-center gap-2 hover:bg-dark-surface transition-all group">
+                            <span class="material-symbols-outlined text-gold">content_copy</span>
+                            <span class="text-[10px] font-bold uppercase text-gray-500 group-hover:text-gold">Copiar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Editor Canvas -->
+                <div class="xl:col-span-8 bg-dark-card border border-dark-border rounded-2xl flex flex-col min-h-[700px] shadow-2xl relative">
+                    <div class="p-6 border-b border-dark-border flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 rounded-full bg-gold/30"></div>
+                            <span class="font-bold text-lg">Roteiro Sugerido</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 p-6 md:p-12 overflow-y-auto max-w-[800px] mx-auto w-full">
+                        <div id="roteiro">
+                            <div class="text-center space-y-4 py-20">
+                                <span class="material-symbols-outlined text-6xl text-gray-700 opacity-30">dove</span>
+                                <p class="text-gray-500 italic">O sermão gerado aparecerá aqui...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Footer -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
+                <div class="space-y-4">
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">storage</span> Histórico Local
+                    </h4>
+                    <div id="lista-historico" class="bg-dark-card border border-dark-border rounded-2xl overflow-hidden divide-y divide-dark-border">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">cloud</span> Sincronização Nuvem
+                    </h4>
+                    <div class="bg-dark-card border border-dark-border rounded-2xl p-8 flex flex-col items-center justify-center text-center">
+                        <span class="material-symbols-outlined text-4xl text-gray-700 mb-3">cloud_done</span>
+                        <p class="text-sm text-gray-500 mb-4">Seus sermões salvos na nuvem estão seguros e acessíveis de qualquer lugar.</p>
+                        <button onclick="abrirHistorico()" class="text-xs font-bold uppercase tracking-widest text-gold hover:underline flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">sync</span> Acessar Arquivos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Configurações -->
+<div id="config-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-dark-card border border-gold w-full max-w-md rounded-2xl p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-gold font-bold uppercase tracking-widest flex items-center gap-2">
+                <span class="material-symbols-outlined">key</span> API Gemini Key
+            </h3>
+            <button onclick="toggleConfig()" class="text-gray-500 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="space-y-4">
+            <input type="password" id="api-key-input" 
+                   class="w-full bg-dark-bg border border-dark-border rounded-xl px-4 py-3 text-sm text-green-500 font-mono focus:border-gold focus:outline-none" 
+                   placeholder="Cole sua chave do AI Studio aqui...">
+            <div class="flex gap-2">
+                <button onclick="saveKey()" class="flex-1 gold-gradient py-3 rounded-xl text-dark-bg font-bold text-sm uppercase">Salvar Chave</button>
+                <button onclick="removerChave()" class="bg-red-900/20 text-red-500 border border-red-900/50 px-4 py-3 rounded-xl hover:bg-red-900/40 transition-all">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+            </div>
+            <p class="text-[10px] text-center text-gray-600">Sua chave é armazenada localmente no navegador. <br> Obtenha em <strong class="text-gold">aistudio.google.com</strong></p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Histórico Nuvem -->
+<div id="modalHistorico" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+    <div class="bg-dark-card border border-dark-border w-full max-w-2xl rounded-2xl p-6 max-h-[80vh] overflow-hidden flex flex-col">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-gold font-bold uppercase tracking-widest">Biblioteca na Nuvem</h2>
+            <button onclick="document.getElementById('modalHistorico').classList.add('hidden')" class="text-gray-500 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-
-        <p style="color:#555; font-size:11px; margin-top:10px; text-align:center; line-height:1.6;">
-            Chave gratuita em <strong style="color:var(--gold)">aistudio.google.com</strong><br>
-            <span style="color:#444;">A chave é armazenada apenas neste dispositivo.</span>
-        </p>
-    </div>
-
-    <label>Tema ou Versículo</label>
-    <textarea id="tema" placeholder="Sobre o que vamos pregar hoje? Ex: Fé que move montanhas (Mateus 17:20)" rows="3"></textarea>
-
-    <label>Estilo de Referência</label>
-    <select id="estiloReferencia">
-        <option value="Pr. Cláudio Duarte">Pr. Cláudio Duarte</option>
-        <option value="Pr. Hernandes Dias Lopes">Pr. Hernandes Dias Lopes</option>
-        <option value="Pr. Isaias de Oliveira">Pr. Isaias de Oliveira</option>
-        <option value="Miss. Edmeia Williams">Miss. Edmeia Williams</option>
-    </select>
-
-    <button id="btn-main" class="btn-gerar" onclick="gerarSermao()">
-        <i class="fa-solid fa-wand-magic-sparkles"></i> GERAR SERMÃO
-    </button>
-
-    <div class="btns-secundarios">
-        <button class="btn-sec btn-salvar" onclick="salvarNoBanco()">
-            <i class="fa-solid fa-cloud-arrow-up"></i> SALVAR
-        </button>
-        <button class="btn-sec btn-hist" onclick="abrirHistorico()">
-            <i class="fa-solid fa-clock-rotate-left"></i> HISTÓRICO
-        </button>
-        <button class="btn-sec btn-pdf" onclick="baixarPDF()">
-            <i class="fa-solid fa-file-pdf"></i> PDF
-        </button>
-    </div>
-
-    <div id="roteiro">
-        <div style="text-align:center; color:#555; padding:20px 0;">
-            <i class="fa-solid fa-dove" style="font-size:28px; display:block; margin-bottom:10px; opacity:0.4;"></i>
-            O sermão gerado aparecerá aqui...
+        <div id="listaSermoes" class="overflow-y-auto space-y-3 pr-2">
+            <!-- Preenchido via JS -->
         </div>
     </div>
 </div>
 
-<!-- Histórico local -->
-<div class="history-section">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <span style="color:var(--gold); font-weight:bold;">
-            <i class="fa-solid fa-clock-rotate-left"></i> SALVOS RECENTEMENTE
-        </span>
-        <button onclick="limparHistorico()" style="background:none; border:none; color:#ff6b6b; cursor:pointer; font-size:12px;">LIMPAR</button>
+<!-- Bottom Mobile Nav -->
+<footer class="md:hidden fixed bottom-0 left-0 right-0 glass-panel border-t border-dark-border px-6 py-3 flex justify-between items-center z-50">
+    <div class="flex flex-col items-center text-gold">
+        <span class="material-symbols-outlined" data-weight="fill">auto_awesome</span>
+        <span class="text-[10px] font-bold uppercase">Novo</span>
     </div>
-    <div id="lista-historico"></div>
-</div>
-
-<!-- Modal histórico nuvem -->
-<div id="modalHistorico">
-    <div class="modal-inner">
-        <button onclick="document.getElementById('modalHistorico').style.display='none'"
-                style="background:#e74c3c; color:#fff; border:none; padding:12px 20px; border-radius:10px; cursor:pointer; font-weight:bold; margin-bottom:20px;">
-            <i class="fa-solid fa-xmark"></i> FECHAR
-        </button>
-        <h2 style="color:var(--gold); margin-bottom:20px; letter-spacing:2px;">Histórico na Nuvem</h2>
-        <div id="listaSermoes"></div>
+    <div onclick="abrirHistorico()" class="flex flex-col items-center text-gray-500">
+        <span class="material-symbols-outlined">menu_book</span>
+        <span class="text-[10px] font-bold uppercase">Biblio</span>
     </div>
-</div>
+    <div onclick="toggleConfig()" class="flex flex-col items-center text-gray-500">
+        <span class="material-symbols-outlined">settings</span>
+        <span class="text-[10px] font-bold uppercase">Ajustes</span>
+    </div>
+</footer>
 
 <script>
+    // ── CONSTANTES E ESTADOS ──
     const MEU_NOME    = "Cicero Daniel";
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbwodI-fHJpXAUQknpHb4oSkfxVpxW_7715DiQey6BAPTrSUOAq9W0fFtTTR7stnEKFP/exec";
     const NOMES_PROIBIDOS = ["Pr. Cláudio Duarte","Cláudio Duarte","Isaias de Oliveira","Hernandes Dias Lopes","Edmeia Williams"];
-
     let MINHA_CHAVE = localStorage.getItem('sermoespro_key') || "";
 
-    // ── Init ──
     function inicializarApp() {
         atualizarInterfaceHistorico();
-        // Atualiza o badge da engrenagem conforme estado da chave
+        atualizarStatusUI();
+    }
+
+    function atualizarStatusUI() {
         const badge = document.getElementById('key-badge');
+        const pill = document.getElementById('status-pill');
         if (MINHA_CHAVE) {
-            badge.className = 'key-badge ok';
+            badge.className = 'absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500';
+            pill.className = 'flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-[10px] text-green-500 font-bold uppercase';
+            pill.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Ativo';
         } else {
-            badge.className = 'key-badge alert';
-            document.getElementById('roteiro').innerHTML = `
-                <div style="color:orange; text-align:center; padding:20px;">
-                    <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; display:block; margin-bottom:10px;"></i>
-                    Olá, ${MEU_NOME}!<br>Configure sua chave API na engrenagem ⚙️ para começar.
-                </div>`;
+            badge.className = 'absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500';
+            pill.className = 'flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-[10px] text-red-500 font-bold uppercase';
+            pill.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inativo';
         }
     }
 
-    // ── Config ──
-    function atualizarStatusChave(estado) {
-        // estado: 'ok' | 'alert' | 'none'
-        const bar    = document.getElementById('key-status-bar');
-        const txt    = document.getElementById('key-status-text');
-        const badge  = document.getElementById('key-badge');
-        const msgs   = { ok: '✅ Chave ativa', alert: '❌ Chave inválida ou expirada', none: '⚠️ Nenhuma chave configurada' };
-        bar.className = 'key-status-bar status-' + estado;
-        txt.textContent = msgs[estado];
-        badge.className = 'key-badge ' + (estado === 'ok' ? 'ok' : 'alert');
-    }
-
+    // ── CONFIGURAÇÕES API ──
     function toggleConfig() {
-        const p = document.getElementById('config-panel');
-        const aberto = p.style.display === 'block';
-        p.style.display = aberto ? 'none' : 'block';
-        if (!aberto) {
-            // Ao abrir: preenche campo se já há chave, e mostra status
-            const input = document.getElementById('api-key-input');
-            if (MINHA_CHAVE) input.value = MINHA_CHAVE;
-            atualizarStatusChave(MINHA_CHAVE ? 'ok' : 'none');
+        const m = document.getElementById('config-modal');
+        m.classList.toggle('hidden');
+        if (!m.classList.contains('hidden')) {
+            document.getElementById('api-key-input').value = MINHA_CHAVE;
         }
     }
 
     function saveKey() {
         const k = document.getElementById('api-key-input').value.trim();
-        if (!k) { alert("Cole uma chave válida antes de salvar!"); return; }
+        if (!k) return alert("Insira a chave!");
         localStorage.setItem('sermoespro_key', k);
         MINHA_CHAVE = k;
-        atualizarStatusChave('ok');
-        document.getElementById('config-panel').style.display = 'none';
-        inicializarApp();
+        atualizarStatusUI();
+        toggleConfig();
     }
 
     function removerChave() {
-        if (!confirm("Deseja realmente apagar a chave API salva?")) return;
+        if (!confirm("Apagar chave salva?")) return;
         localStorage.removeItem('sermoespro_key');
         MINHA_CHAVE = "";
         document.getElementById('api-key-input').value = "";
-        atualizarStatusChave('none');
-        inicializarApp();
+        atualizarStatusUI();
+        toggleConfig();
     }
 
-    // ── Gerar Sermão (Gemini) ──
+    // ── GERAÇÃO DE SERMÃO (Lógica Robusta Original) ──
     async function gerarSermao() {
         const tema       = document.getElementById('tema').value.trim();
         const referencia = document.getElementById('estiloReferencia').value;
@@ -302,8 +344,8 @@
         if (!tema)         { alert("Insira um tema ou versículo!"); return; }
 
         btn.disabled = true;
-        btn.innerHTML = "<i class='fa-solid fa-circle-notch fa-spin'></i> GERANDO SERMÃO...";
-        display.innerHTML = "<div style='text-align:center; padding:30px; color:#888;'><i class='fa-solid fa-circle-notch fa-spin' style='font-size:28px; color:var(--gold);'></i><br><br>Preparando sermão premium...</div>";
+        btn.innerHTML = "<span class='material-symbols-outlined animate-spin'>sync</span> GERANDO SERMÃO...";
+        display.innerHTML = "<div class='text-center py-20'><span class='material-symbols-outlined text-5xl text-gold animate-spin'>sync</span><br><br><span class='text-gray-500'>Preparando sermão premium...</span></div>";
 
         const instrucao = `Você é um pregador cristão experiente e ungido, com o estilo inspirado em ${referencia}.
 Escreva um sermão completo e poderoso sobre: "${tema}".
@@ -320,8 +362,7 @@ Use a seguinte estrutura com estes títulos exatos em negrito:
 
 Escreva em português brasileiro. Linguagem clara, impactante e que toque o coração das pessoas.`;
 
-        // ── Modelos em ordem de preferência — fallback automático ──
-        // Se um modelo estiver sobrecarregado ou com quota, tenta o próximo automaticamente
+        // Modelos em ordem de preferência — fallback automático
         const MODELOS = [
             { id: 'gemini-2.5-flash-preview-05-20', label: 'Gemini 2.5 Flash' },
             { id: 'gemini-2.5-flash',               label: 'Gemini 2.5 Flash' },
@@ -334,20 +375,15 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
 
         const delay = ms => new Promise(r => setTimeout(r, ms));
 
-        // Detecta se é REALMENTE erro de chave inválida (não de quota/modelo)
         function isErroChaveReal(status, data) {
             const msg = (data.error?.message || '').toLowerCase();
             const errStatus = data.error?.status || '';
-            // 401 é sempre chave inválida
             if (status === 401) return true;
-            // 403 só é chave inválida se a mensagem mencionar explicitamente a key
             if (status === 403 && (msg.includes('api key not valid') || msg.includes('api key expired') || msg.includes('invalid api key'))) return true;
-            // UNAUTHENTICATED = chave inválida de fato
             if (errStatus === 'UNAUTHENTICATED') return true;
             return false;
         }
 
-        // Detecta sobrecarga/quota (deve tentar próximo modelo)
         function isSobrecarga(status, data) {
             const msg = (data.error?.message || '').toLowerCase();
             const errStatus = data.error?.status || '';
@@ -357,11 +393,9 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
             return false;
         }
 
-        // Detecta modelo indisponível nesta chave (tenta próximo, mas NÃO é erro de chave)
         function isModeloIndisponivel(status, data) {
             const msg = (data.error?.message || '').toLowerCase();
             const errStatus = data.error?.status || '';
-            // 400 INVALID_ARGUMENT pode ser modelo não acessível, não chave errada
             if ((status === 400 || status === 403) && (errStatus === 'INVALID_ARGUMENT' || errStatus === 'PERMISSION_DENIED' || msg.includes('not found') || msg.includes('not supported') || msg.includes('preview'))) return true;
             return false;
         }
@@ -375,17 +409,16 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
             if (authFailed) break;
             const { id: modelo, label: modeloLabel } = MODELOS[m];
 
-            // Tenta até 2 vezes por modelo em caso de sobrecarga
             for (let tentativa = 1; tentativa <= 2; tentativa++) {
                 try {
-                    display.innerHTML = `<div style='text-align:center; padding:30px; color:#888;'>
-                        <i class='fa-solid fa-circle-notch fa-spin' style='font-size:28px; color:var(--gold);'></i>
+                    display.innerHTML = `<div class='text-center py-20'>
+                        <span class='material-symbols-outlined text-5xl text-gold animate-spin'>sync</span>
                         <br><br>
-                        <span style='font-size:13px;'>
-                            Tentando: <b style='color:var(--gold)'>${modeloLabel}</b>
-                            ${tentativa > 1 ? ' <span style="color:#f39c12;">— retry ' + tentativa + '</span>' : ''}
+                        <span class='text-gray-500'>
+                            Tentando: <b class='text-gold'>${modeloLabel}</b>
+                            ${tentativa > 1 ? ' <span class="text-yellow-600">— retry ' + tentativa + '</span>' : ''}
                         </span>
-                        <br><span style='font-size:11px; color:#555; margin-top:6px; display:block;'>${m + 1} de ${MODELOS.length} opções disponíveis</span>
+                        <br><span class='text-[11px] text-gray-600 mt-2 block'>${m + 1} de ${MODELOS.length} opções disponíveis</span>
                     </div>`;
 
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${MINHA_CHAVE}`;
@@ -397,25 +430,22 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
 
                     const data = await response.json();
 
-                    // ── Chave REALMENTE inválida — para tudo ──
                     if (isErroChaveReal(response.status, data)) {
                         authFailed = true;
                         throw { tipo: 'AUTH', msg: data.error?.message || 'Chave inválida ou expirada.' };
                     }
 
-                    // ── Modelo indisponível nesta chave — pula para próximo modelo ──
                     if (isModeloIndisponivel(response.status, data)) {
                         ultimoErro = { tipo: 'MODELO', msg: `Modelo ${modeloLabel} não disponível.` };
-                        break; // vai pro próximo modelo
+                        break;
                     }
 
-                    // ── Sobrecarga — retry e depois próximo modelo ──
                     if (isSobrecarga(response.status, data)) {
                         ultimoErro = { tipo: 'SOBRECARGA', msg: data.error?.message || 'Servidor sobrecarregado.' };
                         if (tentativa < 2) {
-                            display.innerHTML = `<div style='text-align:center; padding:20px; color:#f39c12;'>
-                                <i class='fa-solid fa-circle-notch fa-spin'></i>
-                                <b style='color:var(--gold)'>${modeloLabel}</b> ocupado — tentando novamente em 4s...
+                            display.innerHTML = `<div class='text-center py-20 text-yellow-600'>
+                                <span class='material-symbols-outlined text-5xl animate-spin'>sync</span>
+                                <br><b class='text-gold'>${modeloLabel}</b> ocupado — tentando novamente em 4s...
                             </div>`;
                             await delay(4000);
                         }
@@ -427,64 +457,58 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
                     textoFinal = data.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (!textoFinal) throw { tipo: 'GERAL', msg: 'Resposta vazia do servidor.' };
                     modeloUsado = modeloLabel;
-                    break; // ✅ sucesso!
+                    break;
 
                 } catch (e) {
                     if (e.tipo === 'AUTH' || authFailed) {
-                        // Chave inválida confirmada — exibe erro e para
-                        atualizarStatusChave('alert');
-                        document.getElementById('key-badge').className = 'key-badge alert';
+                        atualizarStatusUI();
                         display.innerHTML = `
-                            <div style="text-align:center; padding:20px; color:#e74c3c;">
-                                <i class="fa-solid fa-key" style="font-size:28px; display:block; margin-bottom:10px;"></i>
-                                <b>Chave API inválida ou expirada</b><br>
-                                <span style="font-size:13px; color:#888; display:block; margin:8px 0;">${e.msg}</span>
-                                <span style="font-size:11px; color:#555; display:block; margin-bottom:12px;">
-                                    Acesse <b style="color:var(--gold)">aistudio.google.com</b>, gere uma nova chave e cole abaixo.
-                                </span>
-                                <button onclick="toggleConfig()" style="background:var(--gold); border:none; padding:11px 22px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px;">
-                                    <i class="fa-solid fa-key"></i> Inserir Nova Chave
+                            <div class="text-center py-20 px-4">
+                                <span class="material-symbols-outlined text-6xl text-red-600 mb-4">key</span>
+                                <h2 class='text-2xl font-bold text-red-600 mb-2'>Chave API Inválida</h2>
+                                <p class='text-gray-400 mb-4'>${e.msg}</p>
+                                <p class='text-sm text-gray-500 mb-6'>Acesse <b class='text-gold'>aistudio.google.com</b>, gere uma nova chave e cole abaixo.</p>
+                                <button onclick="toggleConfig()" class='gold-gradient px-6 py-3 rounded-lg text-dark-bg font-bold uppercase'>
+                                    <span class="material-symbols-outlined">key</span> Inserir Nova Chave
                                 </button>
                             </div>`;
-                        document.getElementById('config-panel').style.display = 'block';
+                        document.getElementById('config-modal').classList.remove('hidden');
                         document.getElementById('api-key-input').value = '';
-                        atualizarStatusChave('alert');
                         btn.disabled = false;
-                        btn.innerHTML = "<i class='fa-solid fa-wand-magic-sparkles'></i> GERAR SERMÃO";
+                        btn.innerHTML = "<span class='material-symbols-outlined' data-weight='fill'>auto_awesome</span> Gerar Sermão";
                         return;
                     }
                     ultimoErro = e;
-                    break; // erro neste modelo, tenta próximo
+                    break;
                 }
             }
             if (textoFinal) break;
-            // Pausa antes do próximo modelo
             if (m < MODELOS.length - 1 && !authFailed) await delay(1000);
         }
 
         if (!textoFinal) {
-            // Todos os modelos falharam
             const isSobrecargaFinal = ultimoErro?.tipo === 'SOBRECARGA' || ultimoErro?.tipo === 'MODELO' ||
                 (ultimoErro?.msg && ultimoErro.msg.toLowerCase().includes('demand'));
             display.innerHTML = isSobrecargaFinal
-                ? `<div style="text-align:center; padding:20px; color:#f39c12;">
-                    <i class="fa-solid fa-server" style="font-size:28px; display:block; margin-bottom:10px;"></i>
-                    <b>Servidores do Google sobrecarregados</b><br>
-                    <span style="font-size:13px; color:#888; display:block; margin:8px 0;">
-                        Todos os 7 modelos disponíveis estão com alta demanda agora.<br>
-                        Isso é temporário — aguarde alguns minutos e tente novamente.
-                    </span>
-                    <button onclick="gerarSermao()" style="margin-top:12px; background:#f39c12; border:none; padding:11px 22px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px; color:#000;">
-                        <i class="fa-solid fa-rotate-right"></i> Tentar Novamente
+                ? `<div class='text-center py-20 px-4'>
+                    <span class='material-symbols-outlined text-6xl text-yellow-600 mb-4'>cloud_off</span>
+                    <h2 class='text-2xl font-bold text-yellow-600 mb-2'>Servidores Sobrecarregados</h2>
+                    <p class='text-gray-400 mb-4'>Todos os 7 modelos estão com alta demanda agora.</p>
+                    <p class='text-sm text-gray-500 mb-6'>Isso é temporário — aguarde alguns minutos e tente novamente.</p>
+                    <button onclick="gerarSermao()" class='bg-yellow-600 px-6 py-3 rounded-lg text-white font-bold uppercase'>
+                        <span class="material-symbols-outlined">refresh</span> Tentar Novamente
                     </button>
                   </div>`
-                : `<div style="text-align:center; padding:20px; color:#e74c3c;">
-                    <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; display:block; margin-bottom:10px;"></i>
-                    <b>Erro inesperado</b><br>
-                    <span style="font-size:13px; color:#888;">${ultimoErro?.msg || 'Tente novamente.'}</span>
+                : `<div class='text-center py-20 px-4'>
+                    <span class='material-symbols-outlined text-6xl text-red-600 mb-4'>error</span>
+                    <h2 class='text-2xl font-bold text-red-600 mb-2'>Erro Inesperado</h2>
+                    <p class='text-gray-400 mb-6'>${ultimoErro?.msg || 'Tente novamente.'}</p>
+                    <button onclick="gerarSermao()" class='gold-gradient px-6 py-3 rounded-lg text-dark-bg font-bold uppercase'>
+                        <span class="material-symbols-outlined">refresh</span> Tentar Novamente
+                    </button>
                   </div>`;
             btn.disabled = false;
-            btn.innerHTML = "<i class='fa-solid fa-wand-magic-sparkles'></i> GERAR SERMÃO";
+            btn.innerHTML = "<span class='material-symbols-outlined' data-weight='fill'>auto_awesome</span> Gerar Sermão";
             return;
         }
 
@@ -495,27 +519,24 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
         const textoFormatado = textoFinal.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
         display.innerHTML = `
-            <div style="text-align:center; margin-bottom:16px;">
-                <h2 style="margin:0; color:var(--gold); font-size:20px; text-transform:uppercase;">${tema}</h2>
-                <p style="margin:6px 0 0; font-size:13px; color:#888;">
-                    Pregador: ${MEU_NOME} &nbsp;|&nbsp; Estilo: ${referencia}
-                </p>
-                <p style="margin:4px 0 0; font-size:11px; color:#555;">Gerado com ${modeloUsado}</p>
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gold uppercase mb-2">${tema}</h2>
+                <p class="text-sm text-gray-400 uppercase">Pregador: ${MEU_NOME} | Estilo: ${referencia}</p>
+                <p class="text-xs text-gray-600 mt-2">Gerado com ${modeloUsado}</p>
             </div>
-            <hr style="border-top:1px solid #333; margin-bottom:16px;">
+            <hr class="border-dark-border mb-6">
             ${textoFormatado}`;
 
         salvarNoHistorico(tema.toUpperCase(), display.innerHTML);
 
         btn.disabled = false;
-        btn.innerHTML = "<i class='fa-solid fa-wand-magic-sparkles'></i> GERAR SERMÃO";
+        btn.innerHTML = "<span class='material-symbols-outlined' data-weight='fill'>auto_awesome</span> Gerar Sermão";
     }
 
-    // ── Histórico Local ──
+    // ── HISTÓRICO LOCAL ──
     function salvarNoHistorico(titulo, conteudo) {
         const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
-        const data = new Date().toLocaleDateString('pt-BR');
-        h.unshift({ titulo, conteudo, data });
+        h.unshift({ titulo, conteudo, data: new Date().toLocaleDateString('pt-BR') });
         if (h.length > 10) h.pop();
         localStorage.setItem('hist_sermoes_v3', JSON.stringify(h));
         atualizarInterfaceHistorico();
@@ -525,11 +546,14 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
         const div = document.getElementById('lista-historico');
         const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
         div.innerHTML = h.map((item, idx) => `
-            <div class="history-item" onclick="verHistoricoLocal(${idx})">
-                <span class="badge">${item.data}</span><br>
-                <strong style="color:var(--gold); font-size:17px;">${item.titulo}</strong>
+            <div onclick="verHistoricoLocal(${idx})" class="p-4 hover:bg-dark-surface cursor-pointer transition-all group flex justify-between items-center">
+                <div>
+                    <p class="text-sm font-bold group-hover:text-gold transition-colors">${item.titulo}</p>
+                    <p class="text-[10px] text-gray-500 uppercase">${item.data}</p>
+                </div>
+                <span class="material-symbols-outlined text-gray-700 group-hover:text-gold">arrow_forward_ios</span>
             </div>
-        `).join('') || '<p style="color:#555; text-align:center;">Nenhum sermão salvo ainda.</p>';
+        `).join('') || '<p class="p-4 text-center text-gray-600 text-xs">Nenhum registro local.</p>';
     }
 
     function verHistoricoLocal(i) {
@@ -538,55 +562,43 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function limparHistorico() {
-        if (confirm("Apagar todo o histórico local?")) {
-            localStorage.removeItem('hist_sermoes_v3');
-            atualizarInterfaceHistorico();
-        }
-    }
-
-    // ── Salvar na Nuvem ──
+    // ── NUVEM (Google Apps Script) ──
     async function salvarNoBanco() {
-        const tema   = document.getElementById('tema').value;
+        const tema = document.getElementById('tema').value;
         const sermao = document.getElementById('roteiro').innerHTML;
-        if (sermao.length < 100 || sermao.includes('aparecerá aqui') || sermao.includes('Configure') || sermao.includes('Olá')) {
-            return alert("Gere um sermão antes de salvar na nuvem!");
-        }
+        if (sermao.length < 100 || sermao.includes('aparecerá aqui')) return alert("Gere um sermão primeiro!");
+        
         fetch(URL_WEB_APP, {
             method: "POST", mode: "no-cors",
             body: JSON.stringify({ action: "create", tema: tema || "Sem Título", pregador: MEU_NOME, sermao })
         });
-        alert("✅ Sermão enviado para a nuvem!");
+        alert("✅ Enviado para a nuvem!");
     }
 
-    // ── Histórico Nuvem ──
     async function abrirHistorico() {
         const modal = document.getElementById('modalHistorico');
         const lista = document.getElementById('listaSermoes');
-        modal.style.display = 'block';
-        lista.innerHTML = '<p style="color:#888; text-align:center; padding:20px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Buscando...</p>';
+        modal.classList.remove('hidden');
+        lista.innerHTML = '<p class="text-center py-10 text-gray-500"><span class="material-symbols-outlined animate-spin">sync</span> Sincronizando...</p>';
 
         try {
-            const resp  = await fetch(URL_WEB_APP + "?action=read");
+            const resp = await fetch(URL_WEB_APP + "?action=read");
             const dados = await resp.json();
             window.bancoDados = dados;
-
-            lista.innerHTML = dados.length
-                ? dados.slice().reverse().map(s => `
-                    <div class="item-lista" id="item-${s.id}">
-                        <div style="flex:1; cursor:pointer;" onclick="verSermaoBanco('${s.id}')">
-                            <strong>${s.tema || 'Sem título'}</strong>
-                            <div class="item-data">${s.pregador || MEU_NOME}</div>
-                        </div>
-                        <div style="display:flex; gap:8px; margin-left:10px;">
-                            <button class="btn-abrir" onclick="verSermaoBanco('${s.id}')">ABRIR</button>
-                            <button class="btn-excluir" onclick="deletarSermao('${s.id}')"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>`).join('')
-                : '<p style="color:#555; text-align:center; padding:20px;">Nenhum registro na nuvem.</p>';
-
+            lista.innerHTML = dados.length ? dados.slice().reverse().map(s => `
+                <div class="bg-dark-surface p-4 rounded-xl border border-dark-border flex justify-between items-center group">
+                    <div onclick="verSermaoBanco('${s.id}')" class="cursor-pointer flex-1">
+                        <strong class="text-gold block">${s.tema}</strong>
+                        <span class="text-[10px] text-gray-500 uppercase">${s.pregador}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="verSermaoBanco('${s.id}')" class="bg-gold text-dark-bg px-3 py-1 rounded text-[10px] font-bold uppercase hover:brightness-110">Abrir</button>
+                        <button onclick="deletarSermao('${s.id}')" class="bg-red-900/30 text-red-500 p-1 rounded hover:bg-red-900/50"><span class="material-symbols-outlined text-sm">delete</span></button>
+                    </div>
+                </div>
+            `).join('') : '<p class="text-center py-10 text-gray-600">Nenhum sermão na nuvem.</p>';
         } catch (e) {
-            lista.innerHTML = '<p style="color:#e74c3c; text-align:center; padding:20px;">Erro ao carregar histórico da nuvem.</p>';
+            lista.innerHTML = '<p class="text-center py-10 text-red-500">Erro de conexão.</p>';
         }
     }
 
@@ -594,35 +606,33 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
         const s = window.bancoDados?.find(x => x.id == id);
         if (s) {
             document.getElementById('roteiro').innerHTML = s.sermao;
-            document.getElementById('modalHistorico').style.display = 'none';
+            document.getElementById('modalHistorico').classList.add('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
 
     async function deletarSermao(id) {
-        if (!confirm("Remover este sermão da nuvem?")) return;
-        const el = document.getElementById(`item-${id}`);
-        if (el) el.style.opacity = '0.3';
-        fetch(URL_WEB_APP, {
-            method: "POST", mode: "no-cors",
-            body: JSON.stringify({ action: "delete", id })
-        });
-        setTimeout(() => el?.remove(), 500);
+        if (!confirm("Excluir da nuvem?")) return;
+        fetch(URL_WEB_APP, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "delete", id }) });
+        abrirHistorico();
     }
 
-    // ── PDF ──
+    // ── UTILITÁRIOS ──
     function baixarPDF() {
         const el = document.getElementById('roteiro');
-        if (el.innerHTML.includes('aparecerá aqui') || el.innerHTML.includes('Olá')) {
-            return alert("Gere um sermão antes de exportar!");
-        }
+        if (el.innerText.includes('aparecerá aqui')) return alert("Gere um sermão primeiro!");
         html2pdf().set({
-            margin: 12,
-            filename: `Sermao_${MEU_NOME.replace(' ','_')}.pdf`,
+            margin: 12, filename: `Sermao_${MEU_NOME.replace(' ','_')}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, backgroundColor: '#161616' },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         }).from(el).save();
+    }
+
+    function copiarTexto() {
+        const text = document.getElementById('roteiro').innerText;
+        if (text.includes('aparecerá aqui')) return alert("Gere um sermão primeiro!");
+        navigator.clipboard.writeText(text).then(() => alert("✅ Copiado para a área de transferência!"));
     }
 
     // Ctrl+Enter para gerar
