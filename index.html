@@ -1,1 +1,652 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sermões Pro v3 - Premium</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0b0b">
+    
+    <!-- Dependências -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "gold": "#c5a059",
+                        "dark-bg": "#0b0b0b",
+                        "dark-card": "#161616",
+                        "dark-input": "#0b0b0b",
+                        "dark-border": "#333333",
+                        "dark-surface": "#1e1f26",
+                    },
+                    "fontFamily": {
+                        "inter": ["Inter", "sans-serif"],
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .gold-gradient { background: linear-gradient(135deg, #c5a059 0%, #967a44 100%); }
+        .glass-panel { background: rgba(22, 22, 22, 0.8); backdrop-filter: blur(12px); }
+        #roteiro { white-space: pre-wrap; line-height: 1.8; }
+        #roteiro b { color: #c5a059; font-weight: 700; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0b0b; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c5a059; }
+    </style>
+</head>
+<body class="bg-dark-bg text-gray-200 font-inter min-h-screen" onload="inicializarApp()">
+
+<!-- Header TopBar -->
+<header class="bg-dark-bg text-gold border-b border-dark-border shadow-2xl flex justify-between items-center px-6 py-4 w-full sticky top-0 z-50">
+    <div class="flex items-center gap-4">
+        <div class="text-xl font-black tracking-widest flex items-center gap-2">
+            <i class="fa-solid fa-bible text-gold"></i>
+            <span class="hidden sm:inline">SERMÕES PRO</span>
+        </div>
+    </div>
+    <div class="flex items-center gap-3">
+        <button onclick="toggleConfig()" class="text-gray-500 hover:text-gold transition-colors relative p-2" title="Configurações">
+            <span class="material-symbols-outlined">settings</span>
+            <span id="key-badge" class="absolute top-1 right-1 w-2 h-2 rounded-full bg-gray-500"></span>
+        </button>
+        <button onclick="abrirHistorico()" class="text-gray-500 hover:text-gold transition-colors p-2" title="Histórico">
+            <span class="material-symbols-outlined">history</span>
+        </button>
+        <div class="h-8 w-8 rounded-full bg-dark-surface flex items-center justify-center border border-dark-border">
+            <span class="material-symbols-outlined text-sm">account_circle</span>
+        </div>
+    </div>
+</header>
+
+<div class="flex">
+    <!-- SideNavBar (Desktop) -->
+    <aside class="hidden md:flex bg-dark-card h-screen w-64 border-r border-dark-border fixed left-0 top-[65px] flex-col pt-8 z-40">
+        <div class="px-6 mb-8">
+            <div class="bg-dark-surface p-4 rounded-xl border border-dark-border flex items-center gap-3">
+                <div class="h-10 w-10 rounded-full gold-gradient flex items-center justify-center text-dark-bg font-bold">CD</div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wider text-gold">Pregador</p>
+                    <p class="text-xs text-gray-400">Cicero Daniel</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 space-y-1 px-3">
+            <div class="bg-dark-surface text-gold border-l-4 border-gold px-4 py-3 flex items-center gap-3 cursor-pointer">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                <span class="text-sm font-medium uppercase tracking-wider">Novo Sermão</span>
+            </div>
+            <div onclick="abrirHistorico()" class="text-gray-400 hover:bg-dark-surface hover:text-white px-4 py-3 flex items-center gap-3 cursor-pointer transition-all">
+                <span class="material-symbols-outlined">menu_book</span>
+                <span class="text-sm font-medium uppercase tracking-wider">Biblioteca</span>
+            </div>
+        </nav>
+        <div class="px-6 py-8 border-t border-dark-border mt-auto">
+            <button onclick="gerarSermao()" class="gold-gradient w-full py-3 rounded-lg text-dark-bg font-bold text-sm uppercase tracking-widest transition-all hover:brightness-110 active:scale-95">
+                Gerar Agora
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 md:ml-64 p-4 md:p-8 pb-20 md:pb-8">
+        <div class="max-w-[1200px] mx-auto space-y-8">
+            
+            <!-- Welcome Header -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-dark-card border border-dark-border rounded-2xl p-8 relative overflow-hidden group">
+                    <div class="relative z-10">
+                        <h1 class="text-3xl md:text-4xl font-bold text-gold mb-2">Componha com Autoridade</h1>
+                        <p class="text-gray-400 text-lg max-w-lg">Transforme sua inspiração em mensagens estruturadas e profundas com a ajuda da inteligência artificial de elite.</p>
+                    </div>
+                    <div class="absolute right-[-5%] top-[-5%] opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="material-symbols-outlined text-[200px]">auto_awesome</span>
+                    </div>
+                </div>
+
+                <!-- Mini API Status Panel -->
+                <div class="bg-dark-card border border-dark-border rounded-2xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gold font-bold flex items-center gap-2 uppercase text-xs tracking-widest">
+                            <span class="material-symbols-outlined text-sm">key</span> API Status
+                        </h3>
+                        <div id="status-pill" class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-500/10 border border-gray-500/20 text-[10px] text-gray-500 font-bold uppercase">
+                            <span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span> Verificando
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4">A chave API é necessária para gerar conteúdos via Google Gemini.</p>
+                    <button onclick="toggleConfig()" class="w-full py-2 bg-dark-surface hover:bg-dark-border border border-dark-border rounded-lg text-xs font-medium transition-all">
+                        Configurar Chave
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Generation Grid -->
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                
+                <!-- Left: Control Panel -->
+                <div class="xl:col-span-4 space-y-6">
+                    <div class="bg-dark-card border border-dark-border rounded-2xl p-6 space-y-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Tema ou Versículo Base</label>
+                                <textarea id="tema" class="w-full bg-dark-input border border-dark-border rounded-xl px-4 py-3 text-sm min-h-[120px] focus:border-gold focus:ring-1 focus:ring-gold/30 focus:outline-none transition-all placeholder:text-gray-700" placeholder="Ex: Fé que move montanhas (Mateus 17:20)..."></textarea>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Estilo de Referência</label>
+                                <select id="estiloReferencia" class="w-full bg-dark-input border border-dark-border rounded-xl px-4 py-3 text-sm focus:border-gold focus:ring-0 focus:outline-none appearance-none cursor-pointer">
+                                    <option value="Pr. Cláudio Duarte">Pr. Cláudio Duarte</option>
+                                    <option value="Pr. Hernandes Dias Lopes">Pr. Hernandes Dias Lopes</option>
+                                    <option value="Pr. Isaias de Oliveira">Pr. Isaias de Oliveira</option>
+                                    <option value="Miss. Edmeia Williams">Miss. Edmeia Williams</option>
+                                    <option value="Pr. Matheus Zandona">Pr. Matheus Zandona</option>
+                                    <option value="Pr. Juliano Fraga">Pr. Juliano Fraga</option>
+                                    <option value="Ev. Billy Graham">Ev. Billy Graham</option>
+                                    <option value="Pr. Marcelo M. Guimarães">Pr. Marcelo M. Guimarães</option>
+                                    <option value="Pr. Oziel Gomes">Pr. Oziel Gomes</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button id="btn-main" onclick="gerarSermao()" class="gold-gradient w-full py-4 rounded-xl text-dark-bg font-extrabold text-lg uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-transform flex items-center justify-center gap-3">
+                            <span class="material-symbols-outlined" data-weight="fill">auto_awesome</span>
+                            Gerar Sermão
+                        </button>
+                    </div>
+
+                    <!-- Secondary Actions -->
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="salvarNoBanco()" class="bg-dark-card border border-dark-border p-4 rounded-xl flex flex-col items-center gap-2 hover:bg-dark-surface transition-all group">
+                            <span class="material-symbols-outlined text-gold">cloud_upload</span>
+                            <span class="text-[10px] font-bold uppercase text-gray-500 group-hover:text-gold">Nuvem</span>
+                        </button>
+                        <button onclick="baixarPDF()" class="bg-dark-card border border-dark-border p-4 rounded-xl flex flex-col items-center gap-2 hover:bg-dark-surface transition-all group">
+                            <span class="material-symbols-outlined text-gold">picture_as_pdf</span>
+                            <span class="text-[10px] font-bold uppercase text-gray-500 group-hover:text-gold">PDF</span>
+                        </button>
+                        <button onclick="copiarTexto()" class="bg-dark-card border border-dark-border p-4 rounded-xl flex flex-col items-center gap-2 hover:bg-dark-surface transition-all group">
+                            <span class="material-symbols-outlined text-gold">content_copy</span>
+                            <span class="text-[10px] font-bold uppercase text-gray-500 group-hover:text-gold">Copiar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Editor Canvas -->
+                <div class="xl:col-span-8 bg-dark-card border border-dark-border rounded-2xl flex flex-col min-h-[700px] shadow-2xl relative">
+                    <div class="p-6 border-b border-dark-border flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 rounded-full bg-gold/30"></div>
+                            <span class="font-bold text-lg">Roteiro Sugerido</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 p-6 md:p-12 overflow-y-auto max-w-[800px] mx-auto w-full">
+                        <div id="roteiro">
+                            <div class="text-center space-y-4 py-20">
+                                <span class="material-symbols-outlined text-6xl text-gray-700 opacity-30">dove</span>
+                                <p class="text-gray-500 italic">O sermão gerado aparecerá aqui...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Footer -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
+                <div class="space-y-4">
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">storage</span> Histórico Local
+                    </h4>
+                    <div id="lista-historico" class="bg-dark-card border border-dark-border rounded-2xl overflow-hidden divide-y divide-dark-border">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">cloud</span> Sincronização Nuvem
+                    </h4>
+                    <div class="bg-dark-card border border-dark-border rounded-2xl p-8 flex flex-col items-center justify-center text-center">
+                        <span class="material-symbols-outlined text-4xl text-gray-700 mb-3">cloud_done</span>
+                        <p class="text-sm text-gray-500 mb-4">Seus sermões salvos na nuvem estão seguros e acessíveis de qualquer lugar.</p>
+                        <button onclick="abrirHistorico()" class="text-xs font-bold uppercase tracking-widest text-gold hover:underline flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">sync</span> Acessar Arquivos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Configurações -->
+<div id="config-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-dark-card border border-gold w-full max-w-md rounded-2xl p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-gold font-bold uppercase tracking-widest flex items-center gap-2">
+                <span class="material-symbols-outlined">key</span> API Gemini Key
+            </h3>
+            <button onclick="toggleConfig()" class="text-gray-500 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="space-y-4">
+            <input type="password" id="api-key-input" 
+                   class="w-full bg-dark-bg border border-dark-border rounded-xl px-4 py-3 text-sm text-green-500 font-mono focus:border-gold focus:outline-none" 
+                   placeholder="Cole sua chave do AI Studio aqui...">
+            <div class="flex gap-2">
+                <button onclick="saveKey()" class="flex-1 gold-gradient py-3 rounded-xl text-dark-bg font-bold text-sm uppercase">Salvar Chave</button>
+                <button onclick="removerChave()" class="bg-red-900/20 text-red-500 border border-red-900/50 px-4 py-3 rounded-xl hover:bg-red-900/40 transition-all">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+            </div>
+            <p class="text-[10px] text-center text-gray-600">Sua chave é armazenada localmente no navegador. <br> Obtenha em <strong class="text-gold">aistudio.google.com</strong></p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Histórico Nuvem -->
+<div id="modalHistorico" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+    <div class="bg-dark-card border border-dark-border w-full max-w-2xl rounded-2xl p-6 max-h-[80vh] overflow-hidden flex flex-col">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-gold font-bold uppercase tracking-widest">Biblioteca na Nuvem</h2>
+            <button onclick="document.getElementById('modalHistorico').classList.add('hidden')" class="text-gray-500 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div id="listaSermoes" class="overflow-y-auto space-y-3 pr-2">
+            <!-- Preenchido via JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Mobile Nav -->
+<footer class="md:hidden fixed bottom-0 left-0 right-0 glass-panel border-t border-dark-border px-6 py-3 flex justify-between items-center z-50">
+    <div class="flex flex-col items-center text-gold">
+        <span class="material-symbols-outlined" data-weight="fill">auto_awesome</span>
+        <span class="text-[10px] font-bold uppercase">Novo</span>
+    </div>
+    <div onclick="abrirHistorico()" class="flex flex-col items-center text-gray-500">
+        <span class="material-symbols-outlined">menu_book</span>
+        <span class="text-[10px] font-bold uppercase">Biblio</span>
+    </div>
+    <div onclick="toggleConfig()" class="flex flex-col items-center text-gray-500">
+        <span class="material-symbols-outlined">settings</span>
+        <span class="text-[10px] font-bold uppercase">Ajustes</span>
+    </div>
+</footer>
+
+<script>
+    // ── CONSTANTES E ESTADOS ──
+    const MEU_NOME    = "Cicero Daniel";
+    const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbwodI-fHJpXAUQknpHb4oSkfxVpxW_7715DiQey6BAPTrSUOAq9W0fFtTTR7stnEKFP/exec";
+    const NOMES_PROIBIDOS = ["Pr. Cláudio Duarte","Cláudio Duarte","Isaias de Oliveira","Hernandes Dias Lopes","Edmeia Williams","Matheus Zandona","Juliano Fraga","Billy Graham","Marcelo M. Guimarães","Marcelo Guimarães","Oziel Gomes"];
+    let MINHA_CHAVE = localStorage.getItem('sermoespro_key') || "";
+
+    function inicializarApp() {
+        atualizarInterfaceHistorico();
+        atualizarStatusUI();
+    }
+
+    function atualizarStatusUI() {
+        const badge = document.getElementById('key-badge');
+        const pill = document.getElementById('status-pill');
+        if (MINHA_CHAVE) {
+            badge.className = 'absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500';
+            pill.className = 'flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-[10px] text-green-500 font-bold uppercase';
+            pill.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Ativo';
+        } else {
+            badge.className = 'absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500';
+            pill.className = 'flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-[10px] text-red-500 font-bold uppercase';
+            pill.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inativo';
+        }
+    }
+
+    // ── CONFIGURAÇÕES API ──
+    function toggleConfig() {
+        const m = document.getElementById('config-modal');
+        m.classList.toggle('hidden');
+        if (!m.classList.contains('hidden')) {
+            document.getElementById('api-key-input').value = MINHA_CHAVE;
+        }
+    }
+
+    function saveKey() {
+        const k = document.getElementById('api-key-input').value.trim();
+        if (!k) return alert("Insira a chave!");
+        localStorage.setItem('sermoespro_key', k);
+        MINHA_CHAVE = k;
+        atualizarStatusUI();
+        toggleConfig();
+    }
+
+    function removerChave() {
+        if (!confirm("Apagar chave salva?")) return;
+        localStorage.removeItem('sermoespro_key');
+        MINHA_CHAVE = "";
+        document.getElementById('api-key-input').value = "";
+        atualizarStatusUI();
+        toggleConfig();
+    }
+
+    // ── GERAÇÃO DE SERMÃO (Lógica Robusta Original) ──
+    async function gerarSermao() {
+        const tema       = document.getElementById('tema').value.trim();
+        const referencia = document.getElementById('estiloReferencia').value;
+        const display    = document.getElementById('roteiro');
+        const btn        = document.getElementById('btn-main');
+
+        if (!MINHA_CHAVE) { alert("Configure sua chave API primeiro!"); toggleConfig(); return; }
+        if (!tema)         { alert("Insira um tema ou versículo!"); return; }
+
+        btn.disabled = true;
+        btn.innerHTML = "<span class='material-symbols-outlined animate-spin'>sync</span> GERANDO SERMÃO...";
+        display.innerHTML = "<div class='text-center py-20'><span class='material-symbols-outlined text-5xl text-gold animate-spin'>sync</span><br><br><span class='text-gray-500'>Preparando sermão premium...</span></div>";
+
+        const instrucao = `Você é um pregador cristão experiente e ungido, com o estilo inspirado em ${referencia}.
+Escreva um sermão completo e poderoso sobre: "${tema}".
+O sermão deve ser assinado por ${MEU_NOME} (não mencione o nome de referência em nenhum momento).
+
+Use a seguinte estrutura com estes títulos exatos em negrito:
+**TÍTULO:** (um título impactante e memorável)
+**INTRODUÇÃO:** (contexto bíblico envolvente, 2-3 parágrafos)
+**PONTO 1:** (com versículo bíblico e explicação objetiva)
+**PONTO 2:** (com versículo bíblico e ilustração prática do cotidiano)
+**PONTO 3:** (com versículo bíblico e aplicação concreta para a vida)
+**CONCLUSÃO:** (apelo ao coração com chamado à decisão)
+**Pregador: ${MEU_NOME}**
+
+Escreva em português brasileiro. Linguagem clara, impactante e que toque o coração das pessoas.`;
+
+        // Modelos em ordem de preferência — fallback automático
+        const MODELOS = [
+            { id: 'gemini-2.5-flash-preview-05-20', label: 'Gemini 2.5 Flash' },
+            { id: 'gemini-2.5-flash',               label: 'Gemini 2.5 Flash' },
+            { id: 'gemini-2.0-flash',               label: 'Gemini 2.0 Flash' },
+            { id: 'gemini-2.0-flash-lite',          label: 'Gemini 2.0 Flash Lite' },
+            { id: 'gemini-1.5-pro',                 label: 'Gemini 1.5 Pro' },
+            { id: 'gemini-1.5-flash',               label: 'Gemini 1.5 Flash' },
+            { id: 'gemini-1.5-flash-8b',            label: 'Gemini 1.5 Flash 8B' }
+        ];
+
+        const delay = ms => new Promise(r => setTimeout(r, ms));
+
+        function isErroChaveReal(status, data) {
+            const msg = (data.error?.message || '').toLowerCase();
+            const errStatus = data.error?.status || '';
+            if (status === 401) return true;
+            if (status === 403 && (msg.includes('api key not valid') || msg.includes('api key expired') || msg.includes('invalid api key'))) return true;
+            if (errStatus === 'UNAUTHENTICATED') return true;
+            return false;
+        }
+
+        function isSobrecarga(status, data) {
+            const msg = (data.error?.message || '').toLowerCase();
+            const errStatus = data.error?.status || '';
+            if (status === 503 || status === 429) return true;
+            if (errStatus === 'UNAVAILABLE' || errStatus === 'RESOURCE_EXHAUSTED') return true;
+            if (msg.includes('high demand') || msg.includes('overloaded') || msg.includes('quota')) return true;
+            return false;
+        }
+
+        function isModeloIndisponivel(status, data) {
+            const msg = (data.error?.message || '').toLowerCase();
+            const errStatus = data.error?.status || '';
+            if ((status === 400 || status === 403) && (errStatus === 'INVALID_ARGUMENT' || errStatus === 'PERMISSION_DENIED' || msg.includes('not found') || msg.includes('not supported') || msg.includes('preview'))) return true;
+            return false;
+        }
+
+        let textoFinal = null;
+        let ultimoErro = null;
+        let modeloUsado = '';
+        let authFailed  = false;
+
+        for (let m = 0; m < MODELOS.length; m++) {
+            if (authFailed) break;
+            const { id: modelo, label: modeloLabel } = MODELOS[m];
+
+            for (let tentativa = 1; tentativa <= 2; tentativa++) {
+                try {
+                    display.innerHTML = `<div class='text-center py-20'>
+                        <span class='material-symbols-outlined text-5xl text-gold animate-spin'>sync</span>
+                        <br><br>
+                        <span class='text-gray-500'>
+                            Tentando: <b class='text-gold'>${modeloLabel}</b>
+                            ${tentativa > 1 ? ' <span class="text-yellow-600">— retry ' + tentativa + '</span>' : ''}
+                        </span>
+                        <br><span class='text-[11px] text-gray-600 mt-2 block'>${m + 1} de ${MODELOS.length} opções disponíveis</span>
+                    </div>`;
+
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${MINHA_CHAVE}`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: instrucao }] }] })
+                    });
+
+                    const data = await response.json();
+
+                    if (isErroChaveReal(response.status, data)) {
+                        authFailed = true;
+                        throw { tipo: 'AUTH', msg: data.error?.message || 'Chave inválida ou expirada.' };
+                    }
+
+                    if (isModeloIndisponivel(response.status, data)) {
+                        ultimoErro = { tipo: 'MODELO', msg: `Modelo ${modeloLabel} não disponível.` };
+                        break;
+                    }
+
+                    if (isSobrecarga(response.status, data)) {
+                        ultimoErro = { tipo: 'SOBRECARGA', msg: data.error?.message || 'Servidor sobrecarregado.' };
+                        if (tentativa < 2) {
+                            display.innerHTML = `<div class='text-center py-20 text-yellow-600'>
+                                <span class='material-symbols-outlined text-5xl animate-spin'>sync</span>
+                                <br><b class='text-gold'>${modeloLabel}</b> ocupado — tentando novamente em 4s...
+                            </div>`;
+                            await delay(4000);
+                        }
+                        continue;
+                    }
+
+                    if (data.error) throw { tipo: 'GERAL', msg: data.error.message };
+
+                    textoFinal = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!textoFinal) throw { tipo: 'GERAL', msg: 'Resposta vazia do servidor.' };
+                    modeloUsado = modeloLabel;
+                    break;
+
+                } catch (e) {
+                    if (e.tipo === 'AUTH' || authFailed) {
+                        atualizarStatusUI();
+                        display.innerHTML = `
+                            <div class="text-center py-20 px-4">
+                                <span class="material-symbols-outlined text-6xl text-red-600 mb-4">key</span>
+                                <h2 class='text-2xl font-bold text-red-600 mb-2'>Chave API Inválida</h2>
+                                <p class='text-gray-400 mb-4'>${e.msg}</p>
+                                <p class='text-sm text-gray-500 mb-6'>Acesse <b class='text-gold'>aistudio.google.com</b>, gere uma nova chave e cole abaixo.</p>
+                                <button onclick="toggleConfig()" class='gold-gradient px-6 py-3 rounded-lg text-dark-bg font-bold uppercase'>
+                                    <span class="material-symbols-outlined">key</span> Inserir Nova Chave
+                                </button>
+                            </div>`;
+                        document.getElementById('config-modal').classList.remove('hidden');
+                        document.getElementById('api-key-input').value = '';
+                        btn.disabled = false;
+                        btn.innerHTML = "<span class='material-symbols-outlined' data-weight='fill'>auto_awesome</span> Gerar Sermão";
+                        return;
+                    }
+                    ultimoErro = e;
+                    break;
+                }
+            }
+            if (textoFinal) break;
+            if (m < MODELOS.length - 1 && !authFailed) await delay(1000);
+        }
+
+        if (!textoFinal) {
+            const isSobrecargaFinal = ultimoErro?.tipo === 'SOBRECARGA' || ultimoErro?.tipo === 'MODELO' ||
+                (ultimoErro?.msg && ultimoErro.msg.toLowerCase().includes('demand'));
+            display.innerHTML = isSobrecargaFinal
+                ? `<div class='text-center py-20 px-4'>
+                    <span class='material-symbols-outlined text-6xl text-yellow-600 mb-4'>cloud_off</span>
+                    <h2 class='text-2xl font-bold text-yellow-600 mb-2'>Servidores Sobrecarregados</h2>
+                    <p class='text-gray-400 mb-4'>Todos os 7 modelos estão com alta demanda agora.</p>
+                    <p class='text-sm text-gray-500 mb-6'>Isso é temporário — aguarde alguns minutos e tente novamente.</p>
+                    <button onclick="gerarSermao()" class='bg-yellow-600 px-6 py-3 rounded-lg text-white font-bold uppercase'>
+                        <span class="material-symbols-outlined">refresh</span> Tentar Novamente
+                    </button>
+                  </div>`
+                : `<div class='text-center py-20 px-4'>
+                    <span class='material-symbols-outlined text-6xl text-red-600 mb-4'>error</span>
+                    <h2 class='text-2xl font-bold text-red-600 mb-2'>Erro Inesperado</h2>
+                    <p class='text-gray-400 mb-6'>${ultimoErro?.msg || 'Tente novamente.'}</p>
+                    <button onclick="gerarSermao()" class='gold-gradient px-6 py-3 rounded-lg text-dark-bg font-bold uppercase'>
+                        <span class="material-symbols-outlined">refresh</span> Tentar Novamente
+                    </button>
+                  </div>`;
+            btn.disabled = false;
+            btn.innerHTML = "<span class='material-symbols-outlined' data-weight='fill'>auto_awesome</span> Gerar Sermão";
+            return;
+        }
+
+        // ── Sucesso ──
+        NOMES_PROIBIDOS.forEach(nome => {
+            textoFinal = textoFinal.replace(new RegExp(nome, "gi"), MEU_NOME);
+        });
+        const textoFormatado = textoFinal.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+        display.innerHTML = `
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gold uppercase mb-2">${tema}</h2>
+                <p class="text-sm text-gray-400 uppercase">Pregador: ${MEU_NOME} | Estilo: ${referencia}</p>
+                <p class="text-xs text-gray-600 mt-2">Gerado com ${modeloUsado}</p>
+            </div>
+            <hr class="border-dark-border mb-6">
+            ${textoFormatado}`;
+
+        salvarNoHistorico(tema.toUpperCase(), display.innerHTML);
+
+        btn.disabled = false;
+        btn.innerHTML = "<span class='material-symbols-outlined' data-weight='fill'>auto_awesome</span> Gerar Sermão";
+    }
+
+    // ── HISTÓRICO LOCAL ──
+    function salvarNoHistorico(titulo, conteudo) {
+        const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
+        h.unshift({ titulo, conteudo, data: new Date().toLocaleDateString('pt-BR') });
+        if (h.length > 10) h.pop();
+        localStorage.setItem('hist_sermoes_v3', JSON.stringify(h));
+        atualizarInterfaceHistorico();
+    }
+
+    function atualizarInterfaceHistorico() {
+        const div = document.getElementById('lista-historico');
+        const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
+        div.innerHTML = h.map((item, idx) => `
+            <div onclick="verHistoricoLocal(${idx})" class="p-4 hover:bg-dark-surface cursor-pointer transition-all group flex justify-between items-center">
+                <div>
+                    <p class="text-sm font-bold group-hover:text-gold transition-colors">${item.titulo}</p>
+                    <p class="text-[10px] text-gray-500 uppercase">${item.data}</p>
+                </div>
+                <span class="material-symbols-outlined text-gray-700 group-hover:text-gold">arrow_forward_ios</span>
+            </div>
+        `).join('') || '<p class="p-4 text-center text-gray-600 text-xs">Nenhum registro local.</p>';
+    }
+
+    function verHistoricoLocal(i) {
+        const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
+        document.getElementById('roteiro').innerHTML = h[i].conteudo;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── NUVEM (Google Apps Script) ──
+    async function salvarNoBanco() {
+        const tema = document.getElementById('tema').value;
+        const sermao = document.getElementById('roteiro').innerHTML;
+        if (sermao.length < 100 || sermao.includes('aparecerá aqui')) return alert("Gere um sermão primeiro!");
+        
+        fetch(URL_WEB_APP, {
+            method: "POST", mode: "no-cors",
+            body: JSON.stringify({ action: "create", tema: tema || "Sem Título", pregador: MEU_NOME, sermao })
+        });
+        alert("✅ Enviado para a nuvem!");
+    }
+
+    async function abrirHistorico() {
+        const modal = document.getElementById('modalHistorico');
+        const lista = document.getElementById('listaSermoes');
+        modal.classList.remove('hidden');
+        lista.innerHTML = '<p class="text-center py-10 text-gray-500"><span class="material-symbols-outlined animate-spin">sync</span> Sincronizando...</p>';
+
+        try {
+            const resp = await fetch(URL_WEB_APP + "?action=read");
+            const dados = await resp.json();
+            window.bancoDados = dados;
+            lista.innerHTML = dados.length ? dados.slice().reverse().map(s => `
+                <div class="bg-dark-surface p-4 rounded-xl border border-dark-border flex justify-between items-center group">
+                    <div onclick="verSermaoBanco('${s.id}')" class="cursor-pointer flex-1">
+                        <strong class="text-gold block">${s.tema}</strong>
+                        <span class="text-[10px] text-gray-500 uppercase">${s.pregador}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="verSermaoBanco('${s.id}')" class="bg-gold text-dark-bg px-3 py-1 rounded text-[10px] font-bold uppercase hover:brightness-110">Abrir</button>
+                        <button onclick="deletarSermao('${s.id}')" class="bg-red-900/30 text-red-500 p-1 rounded hover:bg-red-900/50"><span class="material-symbols-outlined text-sm">delete</span></button>
+                    </div>
+                </div>
+            `).join('') : '<p class="text-center py-10 text-gray-600">Nenhum sermão na nuvem.</p>';
+        } catch (e) {
+            lista.innerHTML = '<p class="text-center py-10 text-red-500">Erro de conexão.</p>';
+        }
+    }
+
+    function verSermaoBanco(id) {
+        const s = window.bancoDados?.find(x => x.id == id);
+        if (s) {
+            document.getElementById('roteiro').innerHTML = s.sermao;
+            document.getElementById('modalHistorico').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    async function deletarSermao(id) {
+        if (!confirm("Excluir da nuvem?")) return;
+        fetch(URL_WEB_APP, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "delete", id }) });
+        abrirHistorico();
+    }
+
+    // ── UTILITÁRIOS ──
+    function baixarPDF() {
+        const el = document.getElementById('roteiro');
+        if (el.innerText.includes('aparecerá aqui')) return alert("Gere um sermão primeiro!");
+        html2pdf().set({
+            margin: 12, filename: `Sermao_${MEU_NOME.replace(' ','_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, backgroundColor: '#161616' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        }).from(el).save();
+    }
+
+    function copiarTexto() {
+        const text = document.getElementById('roteiro').innerText;
+        if (text.includes('aparecerá aqui')) return alert("Gere um sermão primeiro!");
+        navigator.clipboard.writeText(text).then(() => alert("✅ Copiado para a área de transferência!"));
+    }
+
+    // Ctrl+Enter para gerar
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('tema').addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === 'Enter') gerarSermao();
+        });
+    });
+</script>
+</body>
+</html>
 
