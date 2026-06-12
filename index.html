@@ -146,18 +146,11 @@
                                 <textarea id="tema" class="w-full bg-dark-input border border-dark-border rounded-xl px-4 py-3 text-sm min-h-[120px] focus:border-gold focus:ring-1 focus:ring-gold/30 focus:outline-none transition-all placeholder:text-gray-700" placeholder="Ex: Fé que move montanhas (Mateus 17:20)..."></textarea>
                             </div>
                             <div>
-                                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Estilo de Referência</label>
-                                <select id="estiloReferencia" class="w-full bg-dark-input border border-dark-border rounded-xl px-4 py-3 text-sm focus:border-gold focus:ring-0 focus:outline-none appearance-none cursor-pointer">
-                                    <option value="Pr. Cláudio Duarte">Pr. Cláudio Duarte</option>
-                                    <option value="Pr. Hernandes Dias Lopes">Pr. Hernandes Dias Lopes</option>
-                                    <option value="Pr. Isaias de Oliveira">Pr. Isaias de Oliveira</option>
-                                    <option value="Miss. Edmeia Williams">Miss. Edmeia Williams</option>
-                                    <option value="Pr. Matheus Zandona">Pr. Matheus Zandona</option>
-                                    <option value="Pr. Juliano Fraga">Pr. Juliano Fraga</option>
-                                    <option value="Ev. Billy Graham">Ev. Billy Graham</option>
-                                    <option value="Pr. Marcelo M. Guimarães">Pr. Marcelo M. Guimarães</option>
-                                    <option value="Pr. Oziel Gomes">Pr. Oziel Gomes</option>
-                                </select>
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Estilo de Referência <span id="estilo-counter" class="text-gold">(0/3)</span></label>
+                                <div id="estiloReferencia" class="w-full bg-dark-input border border-dark-border rounded-xl px-2 py-2 space-y-1 max-h-[200px] overflow-y-auto">
+                                    <!-- Checkboxes gerados via JS -->
+                                </div>
+                                <p class="text-[10px] text-gray-600 mt-1">Selecione até 3 estilos para mesclar</p>
                             </div>
                         </div>
                         
@@ -191,6 +184,10 @@
                             <div class="w-3 h-3 rounded-full bg-gold/30"></div>
                             <span class="font-bold text-lg">Roteiro Sugerido</span>
                         </div>
+                        <button id="btn-editar" onclick="toggleEdicao()" class="hidden items-center gap-2 bg-dark-surface border border-dark-border px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-gold hover:border-gold transition-all">
+                            <span class="material-symbols-outlined text-sm" id="icon-editar">edit</span>
+                            <span id="label-editar">Editar</span>
+                        </button>
                     </div>
                     <div class="flex-1 p-6 md:p-12 overflow-y-auto max-w-[800px] mx-auto w-full">
                         <div id="roteiro">
@@ -206,9 +203,14 @@
             <!-- History Footer -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
                 <div class="space-y-4">
-                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">storage</span> Histórico Local
-                    </h4>
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">storage</span> Histórico Local
+                        </h4>
+                        <button id="btn-excluir-local" onclick="excluirSelecionadosLocal()" class="hidden items-center gap-1 bg-red-900/20 border border-red-900/50 text-red-500 px-3 py-1 rounded-lg text-[10px] font-bold uppercase hover:bg-red-900/40 transition-all">
+                            <span class="material-symbols-outlined text-sm">delete_sweep</span> Excluir Selecionados
+                        </button>
+                    </div>
                     <div id="lista-historico" class="bg-dark-card border border-dark-border rounded-2xl overflow-hidden divide-y divide-dark-border">
                         <!-- Preenchido via JS -->
                     </div>
@@ -259,9 +261,14 @@
     <div class="bg-dark-card border border-dark-border w-full max-w-2xl rounded-2xl p-6 max-h-[80vh] overflow-hidden flex flex-col">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-gold font-bold uppercase tracking-widest">Biblioteca na Nuvem</h2>
-            <button onclick="document.getElementById('modalHistorico').classList.add('hidden')" class="text-gray-500 hover:text-white">
-                <span class="material-symbols-outlined">close</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <button id="btn-excluir-nuvem" onclick="excluirSelecionadosNuvem()" class="hidden items-center gap-1 bg-red-900/20 border border-red-900/50 text-red-500 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase hover:bg-red-900/40 transition-all">
+                    <span class="material-symbols-outlined text-sm">delete_sweep</span> Excluir Selecionados
+                </button>
+                <button onclick="document.getElementById('modalHistorico').classList.add('hidden')" class="text-gray-500 hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
         </div>
         <div id="listaSermoes" class="overflow-y-auto space-y-3 pr-2">
             <!-- Preenchido via JS -->
@@ -293,6 +300,7 @@
     let MINHA_CHAVE = localStorage.getItem('sermoespro_key') || "";
 
     function inicializarApp() {
+        inicializarEstilos();
         atualizarInterfaceHistorico();
         atualizarStatusUI();
     }
@@ -341,18 +349,31 @@
     // ── GERAÇÃO DE SERMÃO (Lógica Robusta Original) ──
     async function gerarSermao() {
         const tema       = document.getElementById('tema').value.trim();
-        const referencia = document.getElementById('estiloReferencia').value;
+        const estilosSelecionados = getEstilosSelecionados();
+        const referencia = estilosSelecionados.length ? estilosSelecionados.join(', ') : 'Pr. Cláudio Duarte';
         const display    = document.getElementById('roteiro');
         const btn        = document.getElementById('btn-main');
 
         if (!MINHA_CHAVE) { alert("Configure sua chave API primeiro!"); toggleConfig(); return; }
         if (!tema)         { alert("Insira um tema ou versículo!"); return; }
 
+        // Ocultar botão editar ao gerar novo sermão
+        modoEdicao = false;
+        const btnEditar = document.getElementById('btn-editar');
+        btnEditar.classList.add('hidden');
+        btnEditar.classList.remove('flex');
+        document.getElementById('roteiro').contentEditable = 'false';
+        document.getElementById('roteiro').classList.remove('border', 'border-gold/40', 'rounded-xl', 'p-4');
+
         btn.disabled = true;
         btn.innerHTML = "<span class='material-symbols-outlined animate-spin'>sync</span> GERANDO SERMÃO...";
         display.innerHTML = "<div class='text-center py-20'><span class='material-symbols-outlined text-5xl text-gold animate-spin'>sync</span><br><br><span class='text-gray-500'>Preparando sermão premium...</span></div>";
 
-        const instrucao = `Você é um pregador cristão experiente e ungido, com o estilo inspirado em ${referencia}.
+        const estiloInstrucao = estilosSelecionados.length > 1
+            ? `com estilo que mescla as características de: ${estilosSelecionados.join(', ')} — combine a narratividade e humor de um, a profundidade exegética de outro e o fervor evangelístico dos demais, criando uma pregação única`
+            : `com o estilo inspirado em ${referencia}`;
+
+        const instrucao = `Você é um pregador cristão experiente e ungido, ${estiloInstrucao}.
 Escreva um sermão completo e poderoso sobre: "${tema}".
 O sermão deve ser assinado por ${MEU_NOME} (não mencione o nome de referência em nenhum momento).
 
@@ -532,6 +553,11 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
             <hr class="border-dark-border mb-6">
             ${textoFormatado}`;
 
+        // Mostrar botão de edição
+        const btnEditar = document.getElementById('btn-editar');
+        btnEditar.classList.remove('hidden');
+        btnEditar.classList.add('flex');
+
         salvarNoHistorico(tema.toUpperCase(), display.innerHTML);
 
         btn.disabled = false;
@@ -551,14 +577,43 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
         const div = document.getElementById('lista-historico');
         const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
         div.innerHTML = h.map((item, idx) => `
-            <div onclick="verHistoricoLocal(${idx})" class="p-4 hover:bg-dark-surface cursor-pointer transition-all group flex justify-between items-center">
-                <div>
+            <div class="p-4 hover:bg-dark-surface transition-all group flex items-center gap-3">
+                <input type="checkbox" class="checkbox-local w-4 h-4 accent-gold cursor-pointer flex-shrink-0" data-idx="${idx}" onchange="atualizarBtnExcluirLocal()">
+                <div onclick="verHistoricoLocal(${idx})" class="flex-1 cursor-pointer">
                     <p class="text-sm font-bold group-hover:text-gold transition-colors">${item.titulo}</p>
                     <p class="text-[10px] text-gray-500 uppercase">${item.data}</p>
                 </div>
-                <span class="material-symbols-outlined text-gray-700 group-hover:text-gold">arrow_forward_ios</span>
+                <button onclick="excluirItemLocal(${idx})" class="text-gray-700 hover:text-red-500 transition-colors flex-shrink-0" title="Excluir">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
             </div>
         `).join('') || '<p class="p-4 text-center text-gray-600 text-xs">Nenhum registro local.</p>';
+        atualizarBtnExcluirLocal();
+    }
+
+    function atualizarBtnExcluirLocal() {
+        const checked = document.querySelectorAll('.checkbox-local:checked').length;
+        const btn = document.getElementById('btn-excluir-local');
+        if (checked > 0) { btn.classList.remove('hidden'); btn.classList.add('flex'); }
+        else { btn.classList.add('hidden'); btn.classList.remove('flex'); }
+    }
+
+    function excluirItemLocal(idx) {
+        if (!confirm("Excluir este sermão do histórico local?")) return;
+        const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
+        h.splice(idx, 1);
+        localStorage.setItem('hist_sermoes_v3', JSON.stringify(h));
+        atualizarInterfaceHistorico();
+    }
+
+    function excluirSelecionadosLocal() {
+        const checked = [...document.querySelectorAll('.checkbox-local:checked')].map(c => parseInt(c.dataset.idx));
+        if (!checked.length) return;
+        if (!confirm(`Excluir ${checked.length} sermão(s) selecionado(s)?`)) return;
+        let h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
+        h = h.filter((_, i) => !checked.includes(i));
+        localStorage.setItem('hist_sermoes_v3', JSON.stringify(h));
+        atualizarInterfaceHistorico();
     }
 
     function verHistoricoLocal(i) {
@@ -585,18 +640,22 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
         const lista = document.getElementById('listaSermoes');
         modal.classList.remove('hidden');
         lista.innerHTML = '<p class="text-center py-10 text-gray-500"><span class="material-symbols-outlined animate-spin">sync</span> Sincronizando...</p>';
+        // Esconder botão de excluir em lote ao recarregar
+        const btnNuvem = document.getElementById('btn-excluir-nuvem');
+        btnNuvem.classList.add('hidden'); btnNuvem.classList.remove('flex');
 
         try {
             const resp = await fetch(URL_WEB_APP + "?action=read");
             const dados = await resp.json();
             window.bancoDados = dados;
             lista.innerHTML = dados.length ? dados.slice().reverse().map(s => `
-                <div class="bg-dark-surface p-4 rounded-xl border border-dark-border flex justify-between items-center group">
+                <div class="bg-dark-surface p-4 rounded-xl border border-dark-border flex items-center gap-3 group">
+                    <input type="checkbox" class="checkbox-nuvem w-4 h-4 accent-gold cursor-pointer flex-shrink-0" data-id="${s.id}" onchange="atualizarBtnExcluirNuvem()">
                     <div onclick="verSermaoBanco('${s.id}')" class="cursor-pointer flex-1">
                         <strong class="text-gold block">${s.tema}</strong>
                         <span class="text-[10px] text-gray-500 uppercase">${s.pregador}</span>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-shrink-0">
                         <button onclick="verSermaoBanco('${s.id}')" class="bg-gold text-dark-bg px-3 py-1 rounded text-[10px] font-bold uppercase hover:brightness-110">Abrir</button>
                         <button onclick="deletarSermao('${s.id}')" class="bg-red-900/30 text-red-500 p-1 rounded hover:bg-red-900/50"><span class="material-symbols-outlined text-sm">delete</span></button>
                     </div>
@@ -605,6 +664,23 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
         } catch (e) {
             lista.innerHTML = '<p class="text-center py-10 text-red-500">Erro de conexão.</p>';
         }
+    }
+
+    function atualizarBtnExcluirNuvem() {
+        const checked = document.querySelectorAll('.checkbox-nuvem:checked').length;
+        const btn = document.getElementById('btn-excluir-nuvem');
+        if (checked > 0) { btn.classList.remove('hidden'); btn.classList.add('flex'); }
+        else { btn.classList.add('hidden'); btn.classList.remove('flex'); }
+    }
+
+    async function excluirSelecionadosNuvem() {
+        const ids = [...document.querySelectorAll('.checkbox-nuvem:checked')].map(c => c.dataset.id);
+        if (!ids.length) return;
+        if (!confirm(`Excluir ${ids.length} sermão(s) da nuvem?`)) return;
+        await Promise.all(ids.map(id =>
+            fetch(URL_WEB_APP, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "delete", id }) })
+        ));
+        abrirHistorico();
     }
 
     function verSermaoBanco(id) {
@@ -640,6 +716,77 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
         navigator.clipboard.writeText(text).then(() => alert("✅ Copiado para a área de transferência!"));
     }
 
+    // ── MULTI-ESTILOS ──
+    const ESTILOS_LISTA = [
+        "Pr. Cláudio Duarte",
+        "Pr. Hernandes Dias Lopes",
+        "Pr. Isaias de Oliveira",
+        "Miss. Edmeia Williams",
+        "Pr. Matheus Zandona",
+        "Pr. Juliano Fraga",
+        "Ev. Billy Graham",
+        "Pr. Marcelo M. Guimarães",
+        "Pr. Oziel Gomes"
+    ];
+
+    function inicializarEstilos() {
+        const container = document.getElementById('estiloReferencia');
+        container.innerHTML = ESTILOS_LISTA.map((nome, i) => `
+            <label class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dark-surface cursor-pointer transition-all group">
+                <input type="checkbox" class="checkbox-estilo w-4 h-4 accent-gold" value="${nome}" onchange="onEstiloChange(this)">
+                <span class="text-sm text-gray-300 group-hover:text-gold transition-colors">${nome}</span>
+            </label>
+        `).join('');
+        // Marcar o primeiro por padrão
+        container.querySelector('.checkbox-estilo').checked = true;
+        atualizarContadorEstilo();
+    }
+
+    function onEstiloChange(el) {
+        const checked = document.querySelectorAll('.checkbox-estilo:checked');
+        if (checked.length > 3) { el.checked = false; return; }
+        if (checked.length === 0) { el.checked = true; return; } // mínimo 1
+        atualizarContadorEstilo();
+    }
+
+    function atualizarContadorEstilo() {
+        const n = document.querySelectorAll('.checkbox-estilo:checked').length;
+        document.getElementById('estilo-counter').textContent = `(${n}/3)`;
+    }
+
+    function getEstilosSelecionados() {
+        return [...document.querySelectorAll('.checkbox-estilo:checked')].map(c => c.value);
+    }
+
+    // ── EDIÇÃO DE ROTEIRO ──
+    let modoEdicao = false;
+
+    function toggleEdicao() {
+        const roteiro = document.getElementById('roteiro');
+        const icon = document.getElementById('icon-editar');
+        const label = document.getElementById('label-editar');
+        modoEdicao = !modoEdicao;
+        if (modoEdicao) {
+            roteiro.contentEditable = 'true';
+            roteiro.classList.add('border', 'border-gold/40', 'rounded-xl', 'p-4', 'focus:outline-none');
+            roteiro.focus();
+            icon.textContent = 'save';
+            label.textContent = 'Salvar';
+            document.getElementById('btn-editar').classList.add('text-gold', 'border-gold');
+            document.getElementById('btn-editar').classList.remove('text-gray-400');
+        } else {
+            roteiro.contentEditable = 'false';
+            roteiro.classList.remove('border', 'border-gold/40', 'rounded-xl', 'p-4', 'focus:outline-none');
+            icon.textContent = 'edit';
+            label.textContent = 'Editar';
+            document.getElementById('btn-editar').classList.remove('text-gold', 'border-gold');
+            document.getElementById('btn-editar').classList.add('text-gray-400');
+            // Atualizar histórico local com conteúdo editado
+            const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
+            if (h.length) { h[0].conteudo = roteiro.innerHTML; localStorage.setItem('hist_sermoes_v3', JSON.stringify(h)); }
+        }
+    }
+
     // Ctrl+Enter para gerar
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('tema').addEventListener('keydown', e => {
@@ -649,4 +796,3 @@ Escreva em português brasileiro. Linguagem clara, impactante e que toque o cora
 </script>
 </body>
 </html>
-
