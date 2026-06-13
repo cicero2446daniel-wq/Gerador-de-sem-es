@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sermões Pro v3.5 - Premium</title>
+    <title>Sermões Pro v3.6 - Premium</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b0b0b">
     
@@ -111,7 +111,7 @@
                 <div class="lg:col-span-2 bg-dark-card border border-dark-border rounded-2xl p-8 relative overflow-hidden group">
                     <div class="relative z-10">
                         <h1 class="text-3xl md:text-4xl font-bold text-gold mb-2">Componha com Autoridade</h1>
-                        <p class="text-gray-400 text-lg max-w-lg">Combine até 3 estilos homiléticos simultâneos e edite o resultado final em tempo real.</p>
+                        <p class="text-gray-400 text-lg max-w-lg">Alterne facilmente entre esboços rápidos para suas lives de 15 min ou pregações completas de 30 min para a Igreja.</p>
                     </div>
                     <div class="absolute right-[-5%] top-[-5%] opacity-10 group-hover:opacity-20 transition-opacity">
                         <span class="material-symbols-outlined text-[200px]">auto_awesome</span>
@@ -151,8 +151,26 @@
                                     <label class="text-xs font-bold text-gray-500 uppercase tracking-widest block">Estilos de Referência (Máx. 3)</label>
                                     <span id="contador-estilos" class="text-[10px] bg-dark-surface px-2 py-0.5 rounded border border-dark-border text-gold font-bold">0/3</span>
                                 </div>
-                                <div id="container-estilos-multiples" class="grid grid-cols-1 gap-2 max-h-[220px] overflow-y-auto p-1 bg-dark-input rounded-xl border border-dark-border">
-                                    <!-- Gerado via JS para melhor controle -->
+                                <div id="container-estilos-multiples" class="grid grid-cols-1 gap-2 max-h-[160px] overflow-y-auto p-1 bg-dark-input rounded-xl border border-dark-border">
+                                    <!-- Gerado via JS -->
+                                </div>
+                            </div>
+
+                            <!-- NOVO RECURSO: Seletor de Tempo / Ambiente de Pregação -->
+                            <div class="bg-dark-surface p-4 rounded-xl border border-dark-border">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-gold">hourglass_top</span>
+                                        <div>
+                                            <p class="text-xs font-bold uppercase text-gray-300 tracking-wider">Duração Avançada</p>
+                                            <p id="label-duracao" class="text-[11px] text-gray-500">Modo Devocional (10-15 min)</p>
+                                        </div>
+                                    </div>
+                                    <!-- Toggle Switch Estilizado -->
+                                    <label class="relative inline-flex items-center cursor-pointer select-none">
+                                        <input type="checkbox" id="modo-igreja-toggle" onchange="atualizarLabelDuracao(this)" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-dark-bg border border-dark-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-gray-500 peer-checked:after:bg-gold after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gold/10 peer-checked:border-gold/50"></div>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -192,11 +210,10 @@
                         </span>
                     </div>
                     <div class="flex-1 p-6 md:p-12 overflow-y-auto max-w-[800px] mx-auto w-full">
-                        <!-- Roteiro agora é 100% editável diretamente em tela -->
                         <div id="roteiro" contenteditable="true" class="text-gray-200">
                             <div class="text-center space-y-4 py-20" contenteditable="false">
                                 <span class="material-symbols-outlined text-6xl text-gray-700 opacity-30">dove</span>
-                                <p class="text-gray-500 italic">O sermão gerado aparecerá aqui e você poderá editá-lo livremente...</p>
+                                <p class="text-gray-500 italic">O sermão gerado aparecerá aqui... Use as opções à esquerda para configurar.</p>
                             </div>
                         </div>
                     </div>
@@ -259,7 +276,7 @@
     </div>
 </div>
 
-<!-- Modal Histórico Nuvem Expandido com Lote -->
+<!-- Modal Histórico Nuvem -->
 <div id="modalHistorico" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
     <div class="bg-dark-card border border-dark-border w-full max-w-2xl rounded-2xl p-6 max-h-[85vh] overflow-hidden flex flex-col">
         <div class="flex justify-between items-center mb-4">
@@ -272,7 +289,6 @@
             </button>
         </div>
         
-        <!-- Painel de Gerenciamento em Lote -->
         <div class="bg-dark-surface p-3 rounded-xl border border-dark-border mb-4 flex justify-between items-center gap-2">
             <div class="flex items-center gap-2 text-xs">
                 <input type="checkbox" id="select-all-cloud" onclick="toggleSelecionarTodosCloud(this)" class="rounded bg-dark-bg border-dark-border text-gold focus:ring-0 cursor-pointer">
@@ -323,10 +339,21 @@
         atualizarStatusUI();
     }
 
+    function atualizarLabelDuracao(toggle) {
+        const lbl = document.getElementById('label-duracao');
+        if(toggle.checked) {
+            lbl.innerText = "Modo Púlpito / Igreja (25-30 min)";
+            lbl.className = "text-[11px] text-gold font-medium";
+        } else {
+            lbl.innerText = "Modo Devocional (10-15 min)";
+            lbl.className = "text-[11px] text-gray-500";
+        }
+    }
+
     function renderizarListaEstilos() {
         const container = document.getElementById('container-estilos-multiples');
         container.innerHTML = LISTA_ESTILOS_DISPONIVEIS.map((estilo, idx) => `
-            <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-dark-surface/50 cursor-pointer transition-colors text-sm rounded-lg border border-transparent has-[:checked]:border-gold/30 has-[:checked]:bg-gold/5">
+            <label class="flex items-center gap-3 px-3 py-2 hover:bg-dark-surface/50 cursor-pointer transition-colors text-xs rounded-lg border border-transparent has-[:checked]:border-gold/30 has-[:checked]:bg-gold/5">
                 <input type="checkbox" value="${estilo}" onchange="validarSelecaoEstilos(this)" class="checkbox-estilo rounded bg-dark-bg border-dark-border text-gold focus:ring-0 focus:ring-offset-0">
                 <span class="text-gray-300 font-medium">${estilo}</span>
             </label>
@@ -389,12 +416,13 @@
         toggleConfig();
     }
 
-    // ── GERAÇÃO DE SERMÃO (Com suporte a múltiplos estilos) ──
+    // ── GERAÇÃO DE SERMÃO INTELIGENTE (Com controle de tempo dinâmico) ──
     async function gerarSermao() {
         const tema       = document.getElementById('tema').value.trim();
         const estilos    = obterEstilosSelecionados();
         const display    = document.getElementById('roteiro');
         const btn        = document.getElementById('btn-main');
+        const modoIgreja = document.getElementById('modo-igreja-toggle').checked;
 
         if (!MINHA_CHAVE) { alert("Configure sua chave API primeiro!"); toggleConfig(); return; }
         if (!tema)         { alert("Insira um tema ou versículo!"); return; }
@@ -403,42 +431,53 @@
         btn.disabled = true;
         btn.innerHTML = "<span class='material-symbols-outlined animate-spin'>sync</span> GERANDO SERMÃO...";
         display.setAttribute("contenteditable", "false");
-        display.innerHTML = "<div class='text-center py-20'><span class='material-symbols-outlined text-5xl text-gold animate-spin'>sync</span><br><br><span class='text-gray-500'>Preparando mesclagem homilética prêmio...</span></div>";
+        display.innerHTML = `<div class='text-center py-20'><span class='material-symbols-outlined text-5xl text-gold animate-spin'>sync</span><br><br><span class='text-gray-500'>Formatando para o modo ${modoIgreja ? 'Púlpito (30 min)' : 'Devocional (15 min)'}...</span></div>`;
 
         const stringEstilos = estilos.join(', ');
-        const instrucao = `Você é um pregador cristão experiente e ungido, adaptando perfeitamente uma fusão equilibrada baseada nas seguintes referências e estilos: ${stringEstilos}.
-Escreva um sermão completo, poderoso, avivado, alegre e reflexivo sobre o tema: "${tema}".
+        
+        // Estruturação Homilética Condicional baseada no botão de tempo
+        let estruturaRequerida = "";
+        if (modoIgreja) {
+            estruturaRequerida = `O sermão deve ser extenso, profundo e rico em conteúdo para durar cerca de 30 MINUTOS de pregação falada. Use parágrafos detalhados e robustos. Siga EXATAMENTE esta estrutura com estes títulos em negrito:
+**TÍTULO:** (um título impactante, magnético e memorável)
+**INTRODUÇÃO:** (contexto histórico e bíblico muito envolvente e profundo, de 3 a 4 parágrafos)
+**PONTO 1:** (análise profunda da raiz bíblica com explicação teológica substancial)
+**PONTO 2:** (exposição bíblica acompanhada de uma ilustração prática e marcante do cotidiano)
+**PONTO 3:** (exposição bíblica focada na aplicação concreta, confrontamentos saudáveis e consolo para a vida moderna)
+**PONTO 4:** (ponto extra de aprofundamento espiritual, conectando o tema à soberania de Deus com base em versículo chave)
+**CONCLUSÃO:** (um apelo longo e marcante ao coração, chamando a igreja à decisão e posicionamento)
+**Pregador: ${MEU_NOME}**`;
+        } else {
+            estruturaRequerida = `O sermão deve ser focado, dinâmico e direto ao ponto para durar entre 10 a 15 MINUTOS de pregação em formato de live devocional. Siga EXATAMENTE esta estrutura com estes títulos em negrito:
+**TÍTULO:** (um título impactante e memorável)
+**INTRODUÇÃO:** (contexto bíblico rápido e dinâmico, 2 parágrafos)
+**PONTO 1:** (com versículo bíblico e explicação objetiva)
+**PONTO 2:** (com versículo bíblico e ilustração prática rápida)
+**PONTO 3:** (com versículo bíblico e aplicação direta para o dia a dia)
+**CONCLUSÃO:** (apelo curto e direto com chamado à oração)
+**Pregador: ${MEU_NOME}**`;
+        }
+
+        const instrucao = `Você é um pregador cristão experiente e ungido, adaptando perfeitamente uma fusão equilibrada baseada nas seguintes referências e estilos homiléticos: ${stringEstilos}.
+Escreva um sermão completo e poderoso sobre o tema: "${tema}".
 O sermão deve ser assinado por ${MEU_NOME} (não mencione explicitamente o nome de nenhuma das referências citadas no corpo do texto final).
 
-Use a seguinte estrutura com estes títulos exatos em negrito:
-**TÍTULO:** (um título impactante, magnético e memorável)
-**INTRODUÇÃO:** (contexto bíblico envolvente e que chame a atenção, 2-3 parágrafos)
-**PONTO 1:** (com versículo bíblico e explicação objetiva)
-**PONTO 2:** (com versículo bíblico e ilustração prática ou analogia inteligente do cotidiano)
-**PONTO 3:** (com versículo bíblico e aplicação concreta para a vida diária)
-**CONCLUSÃO:** (apelo marcante ao coração com chamado à decisão)
-**Pregador: ${MEU_NOME}**
+${estruturaRequerida}
 
 Escreva em português brasileiro de forma fluida.`;
 
         const MODELOS = [
             { id: 'gemini-2.5-flash',               label: 'Gemini 2.5 Flash' },
             { id: 'gemini-2.0-flash',               label: 'Gemini 2.0 Flash' },
-            { id: 'gemini-1.5-pro',                 label: 'Gemini 1.5 Pro' },
-            { id: 'gemini-1.5-flash',               label: 'Gemini 1.5 Flash' }
+            { id: 'gemini-1.5-pro',                 label: 'Gemini 1.5 Pro' }
         ];
 
         const delay = ms => new Promise(r => setTimeout(r, ms));
-
         let textoFinal = null;
-        let ultimoErro = null;
         let modeloUsado = '';
-        let authFailed  = false;
 
         for (let m = 0; m < MODELOS.length; m++) {
-            if (authFailed) break;
             const { id: modelo, label: modeloLabel } = MODELOS[m];
-
             try {
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${MINHA_CHAVE}`;
                 const response = await fetch(url, {
@@ -448,20 +487,11 @@ Escreva em português brasileiro de forma fluida.`;
                 });
 
                 const data = await response.json();
-
-                if (response.status === 401 || data.error?.status === 'UNAUTHENTICATED') {
-                    authFailed = true;
-                    break;
-                }
-
-                if (data.error) { ultimoErro = { msg: data.error.message }; continue; }
+                if (data.error) continue;
 
                 textoFinal = data.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (textoFinal) { modeloUsado = modeloLabel; break; }
-
-            } catch (e) {
-                ultimoErro = e;
-            }
+            } catch (e) {}
             await delay(1000);
         }
 
@@ -473,7 +503,7 @@ Escreva em português brasileiro de forma fluida.`;
             display.innerHTML = `<div class='text-center py-20 px-4'>
                 <span class='material-symbols-outlined text-6xl text-red-600 mb-4'>error</span>
                 <h2 class='text-2xl font-bold text-red-600 mb-2'>Não foi possível gerar</h2>
-                <p class='text-gray-400 mb-6'>Verifique sua chave de API ou conexão local.</p>
+                <p class='text-gray-400 mb-6'>Verifique sua chave de API ou tente novamente.</p>
             </div>`;
             return;
         }
@@ -486,8 +516,8 @@ Escreva em português brasileiro de forma fluida.`;
         display.innerHTML = `
             <div class="mb-6" contenteditable="false">
                 <h2 class="text-2xl font-bold text-gold uppercase mb-2">${tema}</h2>
-                <p class="text-sm text-gray-400 uppercase">Pregador: ${MEU_NOME} | Estilo combinado: ${stringEstilos}</p>
-                <p class="text-xs text-gray-600 mt-2">Gerado com ${modeloUsado} (Editável abaixo)</p>
+                <p class="text-sm text-gray-400 uppercase">Pregador: ${MEU_NOME} | Duração: ${modoIgreja ? 'Igreja (~30 min)' : 'Devocional (10-15 min)'}</p>
+                <p class="text-xs text-gray-600 mt-2 font-mono">Estrutura homilética montada via ${modeloUsado}</p>
             </div>
             <hr class="border-dark-border mb-6" contenteditable="false">
             <div class="focus:outline-none">${textoFormatado}</div>`;
@@ -530,9 +560,9 @@ Escreva em português brasileiro de forma fluida.`;
         atualizarInterfaceHistorico();
     }
 
-    // ── NUVEM (Google Apps Script - Sincronização e Lote Otimizados) ──
+    // ── NUVEM (Sincronização e Lotes) ──
     async function salvarNoBanco() {
-        const tema = document.getElementById('tema').value || "Sermão Editado";
+        const tema = document.getElementById('tema').value || "Sermão Customizado";
         const sermao = document.getElementById('roteiro').innerHTML;
         if (sermao.length < 100 || sermao.includes('aparecerá aqui')) return alert("Gere ou digite um sermão primeiro!");
         
@@ -540,7 +570,7 @@ Escreva em português brasileiro de forma fluida.`;
             method: "POST", mode: "no-cors",
             body: JSON.stringify({ action: "create", tema: tema, pregador: MEU_NOME, sermao })
         });
-        alert("✅ Conteúdo (incluindo possíveis edições) enviado para a nuvem!");
+        alert("✅ Enviado para a nuvem com sucesso!");
     }
 
     async function abrirHistorico() {
@@ -548,7 +578,7 @@ Escreva em português brasileiro de forma fluida.`;
         const lista = document.getElementById('listaSermoes');
         document.getElementById('select-all-cloud').checked = false;
         modal.classList.remove('hidden');
-        lista.innerHTML = '<p class="text-center py-10 text-gray-500"><span class="material-symbols-outlined animate-spin">sync</span> Carregando repositório em nuvem...</p>';
+        lista.innerHTML = '<p class="text-center py-10 text-gray-500"><span class="material-symbols-outlined animate-spin">sync</span> Sincronizando com a nuvem...</p>';
 
         try {
             const resp = await fetch(URL_WEB_APP + "?action=read");
@@ -568,9 +598,9 @@ Escreva em português brasileiro de forma fluida.`;
                         <button onclick="deletarSermao('${s.id}')" class="bg-red-900/30 text-red-500 p-1 rounded hover:bg-red-900/50"><span class="material-symbols-outlined text-sm">delete</span></button>
                     </div>
                 </div>
-            `).join('') : '<p class="text-center py-10 text-gray-600">Nenhum sermão na nuvem.</p>';
+            `).join('') : '<p class="text-center py-10 Tri-gray-600">Nenhum sermão na nuvem.</p>';
         } catch (e) {
-            lista.innerHTML = '<p class="text-center py-10 text-red-500">Erro ao sincronizar dados da nuvem.</p>';
+            lista.innerHTML = '<p class="text-center py-10 text-red-500">Erro de conexão.</p>';
         }
     }
 
@@ -589,40 +619,33 @@ Escreva em português brasileiro de forma fluida.`;
     }
 
     async function deletarSermao(id) {
-        if (!confirm("Excluir definitivamente este sermão da nuvem?")) return;
+        if (!confirm("Excluir da nuvem?")) return;
         fetch(URL_WEB_APP, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "delete", id }) });
-        alert("Comando de exclusão enviado.");
-        setTimeout(abrirHistorico, 600);
+        setTimeout(abrirHistorico, 500);
     }
 
     async function deletarSermoesEmLote() {
         const marcados = document.querySelectorAll('.cloud-batch-checkbox:checked');
-        if(marcados.length === 0) return alert("Nenhum sermão selecionado para exclusão!");
-        if(!confirm(`Confirma a exclusão de ${marcados.length} sermões de uma só vez na nuvem?`)) return;
+        if(marcados.length === 0) return alert("Nenhum sermão selecionado!");
+        if(!confirm(`Confirma a exclusão de ${marcados.length} sermões em lote?`)) return;
 
         for(let cb of marcados) {
             fetch(URL_WEB_APP, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: "delete", id: cb.value }) });
         }
-        alert("Exclusões em lote enviadas com sucesso!");
+        alert("Comandos de exclusão enviados!");
         setTimeout(abrirHistorico, 800);
     }
 
     // ── UTILITÁRIOS ──
     function baixarPDF() {
         const el = document.getElementById('roteiro');
-        if (el.innerText.includes('aparecerá aqui')) return alert("Gere ou monte um sermão primeiro!");
+        if (el.innerText.includes('aparecerá aqui')) return alert("Gere um sermão primeiro!");
         html2pdf().set({
-            margin: 12, filename: `Sermao_Modificado_${MEU_NOME.replace(' ','_')}.pdf`,
+            margin: 12, filename: `Sermao_${MEU_NOME.replace(' ','_')}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, backgroundColor: '#161616' },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         }).from(el).save();
-    }
-
-    function copiarTexto() {
-        const text = document.getElementById('roteiro').innerText;
-        if (text.includes('aparecerá aqui')) return alert("Gere um sermão primeiro!");
-        navigator.clipboard.writeText(text).then(() => alert("✅ Conteúdo atual (incluindo edições) copiado para a área de transferência!"));
     }
 
     // Ctrl+Enter para gerar rápido
