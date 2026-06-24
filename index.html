@@ -128,9 +128,31 @@
                             <span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span> Verificando
                         </div>
                     </div>
-                    <p class="text-xs text-gray-500 mb-4">A chave API é necessária para gerar conteúdos via Google Gemini.</p>
+                    <!-- Status rows -->
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center justify-between bg-dark-surface rounded-lg px-3 py-2 border border-dark-border">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm text-gold">auto_awesome</span>
+                                <span class="text-[11px] font-bold uppercase text-gray-400">Gemini</span>
+                                <span class="text-[10px] text-gray-600">Principal</span>
+                            </div>
+                            <div id="gemini-status-row" class="flex items-center gap-1 text-[10px] font-bold text-red-500">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Sem chave
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between bg-dark-surface rounded-lg px-3 py-2 border border-dark-border">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm text-blue-400">shield</span>
+                                <span class="text-[11px] font-bold uppercase text-gray-400">Groq</span>
+                                <span class="text-[10px] text-gray-600">Backup</span>
+                            </div>
+                            <div id="groq-status-row" class="flex items-center gap-1 text-[10px] font-bold text-gray-600">
+                                <span class="w-1.5 h-1.5 rounded-full bg-gray-600"></span> Não configurado
+                            </div>
+                        </div>
+                    </div>
                     <button onclick="toggleConfig()" class="w-full py-2 bg-dark-surface hover:bg-dark-border border border-dark-border rounded-lg text-xs font-medium transition-all">
-                        Configurar Chave
+                        Configurar Chaves
                     </button>
                 </div>
             </div>
@@ -272,14 +294,17 @@
                        placeholder="Cole sua chave do AI Studio aqui...">
             </div>
             <!-- Chave Groq (Backup) -->
-            <div>
-                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5 flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-sm text-blue-400">shield</span> Chave API Groq (Backup)
+            <div class="bg-blue-950/20 border border-blue-900/40 rounded-xl p-4">
+                <label class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-sm text-blue-400">shield</span> Chave API Groq (Backup / Fallback)
                 </label>
                 <input type="password" id="groq-key-input" 
-                       class="w-full bg-dark-bg border border-dark-border rounded-xl px-4 py-3 text-sm text-blue-400 font-mono focus:border-blue-500 focus:outline-none" 
-                       placeholder="Cole sua chave da Groq aqui (opcional)...">
-                <p class="text-[10px] text-gray-700 mt-1">Usada automaticamente se o Gemini falhar (erro 429, 503, etc).</p>
+                       class="w-full bg-dark-bg border border-blue-900/50 rounded-xl px-4 py-3 text-sm text-blue-400 font-mono focus:border-blue-500 focus:outline-none" 
+                       placeholder="Cole sua chave da Groq aqui (recomendado)...">
+                <p class="text-[10px] text-blue-900 mt-2 leading-relaxed">
+                    ⚡ Ativada automaticamente quando o Gemini falha (erro 429, 503, etc).<br>
+                    Obtenha grátis em <strong class="text-blue-500">console.groq.com</strong>
+                </p>
             </div>
             <div class="flex gap-2">
                 <button onclick="saveKey()" class="flex-1 gold-gradient py-3 rounded-xl text-dark-bg font-bold text-sm uppercase">Salvar Chaves</button>
@@ -394,6 +419,33 @@
     function atualizarStatusUI() {
         const badge = document.getElementById('key-badge');
         const pill = document.getElementById('status-pill');
+        const geminiRow = document.getElementById('gemini-status-row');
+        const groqRow = document.getElementById('groq-status-row');
+        const temGroq = !!localStorage.getItem('sermoespro_groq_key');
+
+        // Gemini row
+        if (geminiRow) {
+            if (MINHA_CHAVE) {
+                geminiRow.className = 'flex items-center gap-1 text-[10px] font-bold text-green-500';
+                geminiRow.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Ativo';
+            } else {
+                geminiRow.className = 'flex items-center gap-1 text-[10px] font-bold text-red-500';
+                geminiRow.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Sem chave';
+            }
+        }
+
+        // Groq row
+        if (groqRow) {
+            if (temGroq) {
+                groqRow.className = 'flex items-center gap-1 text-[10px] font-bold text-blue-400';
+                groqRow.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span> Pronto';
+            } else {
+                groqRow.className = 'flex items-center gap-1 text-[10px] font-bold text-yellow-600';
+                groqRow.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-yellow-600"></span> Não configurado';
+            }
+        }
+
+        // Header badge & pill (baseia-se no Gemini)
         if (MINHA_CHAVE) {
             badge.className = 'absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500';
             pill.className = 'flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20 text-[10px] text-green-500 font-bold uppercase';
