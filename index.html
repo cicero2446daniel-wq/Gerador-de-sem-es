@@ -551,7 +551,7 @@ Escreva em português brasileiro de forma fluida.`;
 
         // ── Tentativa 1: Gemini (Principal) ──
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODELO_ID}:generateContent?key=${MINHA_CHAVE}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODELO_ID}:generateContent?key=${MINHA_CHAVE.trim()}`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -573,15 +573,12 @@ Escreva em português brasileiro de forma fluida.`;
         } catch (e) {
             console.error("Erro na requisição Gemini:", e);
 
-            // ── Tentativa 2: Groq (Backup) — cadeia de modelos atuais ──
-            const GROQ_KEY = localStorage.getItem('sermoespro_groq_key');
+            // ── Tentativa 2: Groq (Backup) — dois modelos oficiais e estáveis ──
+            const GROQ_KEY = (localStorage.getItem('sermoespro_groq_key') || '').trim();
             if (GROQ_KEY) {
-                // Modelos em ordem de preferência (ativos em 2025)
                 const GROQ_MODELS = [
-                    { id: 'llama-3.3-70b-versatile',                       label: 'Groq · Llama 3.3 70B' },
-                    { id: 'meta-llama/llama-4-maverick-17b-128e-instruct',  label: 'Groq · Llama 4 Maverick' },
-                    { id: 'meta-llama/llama-4-scout-17b-16e-instruct',      label: 'Groq · Llama 4 Scout' },
-                    { id: 'llama-3.1-8b-instant',                           label: 'Groq · Llama 3.1 8B' },
+                    { id: 'llama-3.1-8b-instant',  label: 'Groq · Llama 3.1 8B' },
+                    { id: 'llama3-70b-8192',        label: 'Groq · Llama 3 70B'  },
                 ];
 
                 for (const modelo of GROQ_MODELS) {
@@ -593,7 +590,7 @@ Escreva em português brasileiro de forma fluida.`;
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${GROQ_KEY}`
+                                'Authorization': `Bearer ${GROQ_KEY.trim()}`
                             },
                             body: JSON.stringify({
                                 model: modelo.id,
