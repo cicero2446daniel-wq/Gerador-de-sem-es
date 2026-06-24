@@ -257,21 +257,37 @@
     <div class="bg-dark-card border border-gold w-full max-w-md rounded-2xl p-6 shadow-2xl">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-gold font-bold uppercase tracking-widest flex items-center gap-2">
-                <span class="material-symbols-outlined">key</span> API Gemini Key
+                <span class="material-symbols-outlined">key</span> Configurações de API
             </h3>
             <button onclick="toggleConfig()" class="text-gray-500 hover:text-white"><span class="material-symbols-outlined">close</span></button>
         </div>
         <div class="space-y-4">
-            <input type="password" id="api-key-input" 
-                   class="w-full bg-dark-bg border border-dark-border rounded-xl px-4 py-3 text-sm text-green-500 font-mono focus:border-gold focus:outline-none" 
-                   placeholder="Cole sua chave do AI Studio aqui...">
+            <!-- Chave Gemini (Principal) -->
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5 flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-sm text-gold">auto_awesome</span> Chave API Gemini (Principal)
+                </label>
+                <input type="password" id="api-key-input" 
+                       class="w-full bg-dark-bg border border-dark-border rounded-xl px-4 py-3 text-sm text-green-500 font-mono focus:border-gold focus:outline-none" 
+                       placeholder="Cole sua chave do AI Studio aqui...">
+            </div>
+            <!-- Chave Groq (Backup) -->
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5 flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-sm text-blue-400">shield</span> Chave API Groq (Backup)
+                </label>
+                <input type="password" id="groq-key-input" 
+                       class="w-full bg-dark-bg border border-dark-border rounded-xl px-4 py-3 text-sm text-blue-400 font-mono focus:border-blue-500 focus:outline-none" 
+                       placeholder="Cole sua chave da Groq aqui (opcional)...">
+                <p class="text-[10px] text-gray-700 mt-1">Usada automaticamente se o Gemini falhar (erro 429, 503, etc).</p>
+            </div>
             <div class="flex gap-2">
-                <button onclick="saveKey()" class="flex-1 gold-gradient py-3 rounded-xl text-dark-bg font-bold text-sm uppercase">Salvar Chave</button>
+                <button onclick="saveKey()" class="flex-1 gold-gradient py-3 rounded-xl text-dark-bg font-bold text-sm uppercase">Salvar Chaves</button>
                 <button onclick="removerChave()" class="bg-red-900/20 text-red-500 border border-red-900/50 px-4 py-3 rounded-xl hover:bg-red-900/40 transition-all">
                     <span class="material-symbols-outlined">delete</span>
                 </button>
             </div>
-            <p class="text-[10px] text-center text-gray-600">Sua chave é armazenada localmente no navegador. <br> Obtenha em <strong class="text-gold">aistudio.google.com</strong></p>
+            <p class="text-[10px] text-center text-gray-600">Chaves armazenadas localmente no navegador. <br> Gemini: <strong class="text-gold">aistudio.google.com</strong> · Groq: <strong class="text-blue-400">console.groq.com</strong></p>
         </div>
     </div>
 </div>
@@ -395,23 +411,32 @@
         m.classList.toggle('hidden');
         if (!m.classList.contains('hidden')) {
             document.getElementById('api-key-input').value = MINHA_CHAVE;
+            document.getElementById('groq-key-input').value = localStorage.getItem('sermoespro_groq_key') || "";
         }
     }
 
     function saveKey() {
         const k = document.getElementById('api-key-input').value.trim();
-        if (!k) return alert("Insira a chave!");
+        const gk = document.getElementById('groq-key-input').value.trim();
+        if (!k) return alert("Insira pelo menos a chave Gemini!");
         localStorage.setItem('sermoespro_key', k);
         MINHA_CHAVE = k;
+        if (gk) {
+            localStorage.setItem('sermoespro_groq_key', gk);
+        } else {
+            localStorage.removeItem('sermoespro_groq_key');
+        }
         atualizarStatusUI();
         toggleConfig();
     }
 
     function removerChave() {
-        if (!confirm("Apagar chave salva?")) return;
+        if (!confirm("Apagar todas as chaves salvas?")) return;
         localStorage.removeItem('sermoespro_key');
+        localStorage.removeItem('sermoespro_groq_key');
         MINHA_CHAVE = "";
         document.getElementById('api-key-input').value = "";
+        document.getElementById('groq-key-input').value = "";
         atualizarStatusUI();
         toggleConfig();
     }
@@ -470,7 +495,9 @@ Escreva em português brasileiro de forma fluida.`;
         const MODELO_LABEL = 'Gemini 2.0 Flash';
         let textoFinal = null;
         let modeloUsado = '';
+        let usouFallback = false;
 
+        // ── Tentativa 1: Gemini (Principal) ──
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODELO_ID}:generateContent?key=${MINHA_CHAVE}`;
             const response = await fetch(url, {
@@ -480,12 +507,56 @@ Escreva em português brasileiro de forma fluida.`;
             });
 
             const data = await response.json();
-            if (!data.error) {
-                textoFinal = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-                if (textoFinal) modeloUsado = MODELO_LABEL;
+
+            // Considera falha se houver erro explícito OU status HTTP ruim (429, 503, etc.)
+            if (!response.ok || data.error) {
+                const codigo = data.error?.code || response.status;
+                console.warn(`Gemini falhou (${codigo}). Ativando fallback Groq...`);
+                throw new Error(`Gemini error ${codigo}`);
             }
+
+            textoFinal = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+            if (textoFinal) modeloUsado = MODELO_LABEL;
+
         } catch (e) {
             console.error("Erro na requisição Gemini:", e);
+
+            // ── Tentativa 2: Groq (Backup) ──
+            const GROQ_KEY = localStorage.getItem('sermoespro_groq_key');
+            if (GROQ_KEY) {
+                try {
+                    display.innerHTML = `<div class='text-center py-20'><span class='material-symbols-outlined text-5xl text-blue-400 animate-spin'>sync</span><br><br><span class='text-gray-500'>Gemini indisponível. Ativando Groq como backup...</span></div>`;
+
+                    const groqResp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${GROQ_KEY}`
+                        },
+                        body: JSON.stringify({
+                            model: 'llama3-70b-8192',
+                            messages: [{ role: 'user', content: instrucao }],
+                            temperature: 0.8,
+                            max_tokens: 4096
+                        })
+                    });
+
+                    const groqData = await groqResp.json();
+                    if (!groqResp.ok || groqData.error) {
+                        throw new Error(`Groq error ${groqResp.status}`);
+                    }
+
+                    textoFinal = groqData.choices?.[0]?.message?.content || null;
+                    if (textoFinal) {
+                        modeloUsado = 'Groq · Llama 3 70B (Backup)';
+                        usouFallback = true;
+                    }
+                } catch (groqErr) {
+                    console.error("Erro na requisição Groq (fallback):", groqErr);
+                }
+            } else {
+                console.warn("Nenhuma chave Groq configurada. Não há fallback disponível.");
+            }
         }
 
         btn.disabled = false;
@@ -510,7 +581,10 @@ Escreva em português brasileiro de forma fluida.`;
             <div class="mb-6" contenteditable="false">
                 <h2 class="text-2xl font-bold text-gold uppercase mb-2">${tema}</h2>
                 <p class="text-sm text-gray-400 uppercase">Pregador: ${MEU_NOME} | Duração: ${modoIgreja ? 'Igreja (~30 min)' : 'Devocional (10-15 min)'}</p>
-                <p class="text-xs text-gray-600 mt-2 font-mono">Estrutura homilética montada via ${modeloUsado}</p>
+                <p class="text-xs mt-2 font-mono flex items-center gap-1.5 ${usouFallback ? 'text-blue-500' : 'text-gray-700'}">
+                    <span class="material-symbols-outlined text-xs">${usouFallback ? 'shield' : 'auto_awesome'}</span>
+                    Estrutura homilética montada via ${modeloUsado}
+                </p>
             </div>
             <hr class="border-dark-border mb-6" contenteditable="false">
             <div class="focus:outline-none">${textoFormatado}</div>`;
