@@ -609,11 +609,15 @@ Escreva em português brasileiro de forma fluida.`;
 
         // ── Tentativa 1: Gemini (Principal) ──
         try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODELO_ID}:generateContent?key=${MINHA_CHAVE.trim()}`;
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${MINHA_CHAVE.trim()}`;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: instrucao }] }] })
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: instrucao }]
+                    }]
+                })
             });
 
             const data = await response.json();
@@ -635,8 +639,8 @@ Escreva em português brasileiro de forma fluida.`;
             const GROQ_KEY = (localStorage.getItem('sermoespro_groq_key') || '').trim();
             if (GROQ_KEY) {
                 const GROQ_MODELS = [
-                    { id: 'llama-3.1-8b-instant',  label: 'Groq · Llama 3.1 8B' },
-                    { id: 'llama3-70b-8192',        label: 'Groq · Llama 3 70B'  },
+                    { id: 'llama-3.3-70b-versatile',  label: 'Groq · Llama 3.3 70B' },
+                    { id: 'llama3-70b-8192',           label: 'Groq · Llama 3 70B'   },
                 ];
 
                 for (const modelo of GROQ_MODELS) {
