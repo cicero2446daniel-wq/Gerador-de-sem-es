@@ -573,38 +573,54 @@ Escreva em português brasileiro de forma fluida.`;
         } catch (e) {
             console.error("Erro na requisição Gemini:", e);
 
-            // ── Tentativa 2: Groq (Backup) ──
+            // ── Tentativa 2: Groq (Backup) — cadeia de modelos atuais ──
             const GROQ_KEY = localStorage.getItem('sermoespro_groq_key');
             if (GROQ_KEY) {
-                try {
-                    display.innerHTML = `<div class='text-center py-20'><span class='material-symbols-outlined text-5xl text-blue-400 animate-spin'>sync</span><br><br><span class='text-gray-500'>Gemini indisponível. Ativando Groq como backup...</span></div>`;
+                // Modelos em ordem de preferência (ativos em 2025)
+                const GROQ_MODELS = [
+                    { id: 'llama-3.3-70b-versatile',                       label: 'Groq · Llama 3.3 70B' },
+                    { id: 'meta-llama/llama-4-maverick-17b-128e-instruct',  label: 'Groq · Llama 4 Maverick' },
+                    { id: 'meta-llama/llama-4-scout-17b-16e-instruct',      label: 'Groq · Llama 4 Scout' },
+                    { id: 'llama-3.1-8b-instant',                           label: 'Groq · Llama 3.1 8B' },
+                ];
 
-                    const groqResp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${GROQ_KEY}`
-                        },
-                        body: JSON.stringify({
-                            model: 'llama3-70b-8192',
-                            messages: [{ role: 'user', content: instrucao }],
-                            temperature: 0.8,
-                            max_tokens: 4096
-                        })
-                    });
+                for (const modelo of GROQ_MODELS) {
+                    if (textoFinal) break;
+                    try {
+                        display.innerHTML = `<div class='text-center py-20'><span class='material-symbols-outlined text-5xl text-blue-400 animate-spin'>sync</span><br><br><span class='text-gray-500'>Gemini indisponível. Tentando ${modelo.label}...</span></div>`;
 
-                    const groqData = await groqResp.json();
-                    if (!groqResp.ok || groqData.error) {
-                        throw new Error(`Groq error ${groqResp.status}`);
+                        const groqResp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${GROQ_KEY}`
+                            },
+                            body: JSON.stringify({
+                                model: modelo.id,
+                                messages: [{ role: 'user', content: instrucao }],
+                                temperature: 0.8,
+                                max_tokens: 4096
+                            })
+                        });
+
+                        const groqData = await groqResp.json();
+                        if (!groqResp.ok || groqData.error) {
+                            console.warn(`${modelo.label} falhou (${groqResp.status}). Tentando próximo...`);
+                            continue;
+                        }
+
+                        textoFinal = groqData.choices?.[0]?.message?.content || null;
+                        if (textoFinal) {
+                            modeloUsado = `${modelo.label} (Backup)`;
+                            usouFallback = true;
+                        }
+                    } catch (groqErr) {
+                        console.warn(`Erro ao chamar ${modelo.label}:`, groqErr);
                     }
+                }
 
-                    textoFinal = groqData.choices?.[0]?.message?.content || null;
-                    if (textoFinal) {
-                        modeloUsado = 'Groq · Llama 3 70B (Backup)';
-                        usouFallback = true;
-                    }
-                } catch (groqErr) {
-                    console.error("Erro na requisição Groq (fallback):", groqErr);
+                if (!textoFinal) {
+                    console.error("Todos os modelos Groq falharam.");
                 }
             } else {
                 console.warn("Nenhuma chave Groq configurada. Não há fallback disponível.");
