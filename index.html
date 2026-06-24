@@ -535,8 +535,64 @@
 **Pregador: ${MEU_NOME}**`;
         }
 
-        const instrucao = `DIRETRIZ CRÍTICA DE PRECISÃO BÍBLICA: Você está proibido de inventar versículos, inventar números de pessoas ou criar fatos que não existam na Bíblia Sagrada. Se você não tiver certeza absoluta do contexto exato do capítulo solicitado pelo usuário, use apenas as verdades gerais do livro bíblico citado ou baseie-se estritamente nas palavras informadas no tema. Nunca invente citações entre aspas que não sejam bíblicas.
+        // ── INJEÇÃO DE CONTEXTO BÍBLICO ─────────────────────────────────────────
+        let contextoBiblico = '';
+        const temaLower = tema.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // remove acentos para comparação robusta
 
+        // Gênesis
+        if (temaLower.includes('genesis 1') || temaLower.includes('gen 1') || temaLower.includes('gn 1')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: Gênesis 1 narra a criação do universo por Deus em seis dias: luz, firmamento, terra seca e vegetação, astros, animais aquáticos e aves, animais terrestres e o ser humano à imagem e semelhança de Deus. No sétimo dia Deus descansou. O texto não descreve nenhum conflito, batalha ou queda — isso ocorre em Gênesis 3.';
+        } else if (temaLower.includes('genesis 3') || temaLower.includes('gen 3') || temaLower.includes('gn 3')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: Gênesis 3 narra a queda do ser humano. A serpente engana Eva, que come do fruto proibido e oferece a Adão. Ambos percebem sua nudez e se escondem de Deus. Deus os confronta, amaldiçoa a serpente, anuncia o proto-evangelho (inimizade entre a semente da mulher e a serpente) e expulsa Adão e Eva do Éden.';
+        }
+        // Salmos
+        else if (temaLower.includes('salmo 23') || temaLower.includes('salmos 23') || temaLower.includes('sl 23')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: Salmo 23, de Davi, retrata Deus como o Bom Pastor. Os temas são: provisão ("nada me faltará"), descanso em pastos verdes, restauração da alma, guia nos caminhos da justiça, proteção no vale da sombra da morte, mesa preparada na presença dos inimigos, cabeça ungida com óleo e a promessa de que a bondade e a misericórdia seguirão o salmista todos os seus dias.';
+        } else if (temaLower.includes('salmo 91') || temaLower.includes('salmos 91') || temaLower.includes('sl 91')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: Salmo 91 é um salmo de confiança e proteção divina. Descreve aquele que habita no esconderijo do Altíssimo como protegido de doenças, destruição, laços e terror noturno. Promete que os anjos guardarão o fiel em todos os seus caminhos. Não deve ser confundido com Salmo 23 (o pastor) nem com Salmo 51 (arrependimento).';
+        }
+        // 2 Reis
+        else if (temaLower.includes('2 reis 4') || temaLower.includes('2reis4') || temaLower.includes('ii reis 4')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: 2 Reis 4 narra QUATRO milagres distintos de Eliseu: (1) o azeite da viúva que se multiplica para pagar suas dívidas; (2) o filho da sunamita que nasce por promessa de Eliseu e depois morre e é ressuscitado por ele; (3) o potage envenenado que é purificado por Eliseu com farinha; (4) a multiplicação de vinte pães de cevada para alimentar cem homens com sobras. NÃO confundir com 2 Reis 7 (cerco de Samaria e os leprosos).';
+        } else if (temaLower.includes('2 reis 5') || temaLower.includes('2reis5') || temaLower.includes('ii reis 5')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: 2 Reis 5 relata a cura de Naamã, general sírio leproso. Uma jovem escrava israelita indica Eliseu. O rei da Síria envia carta ao rei de Israel, que se rasga as vestes. Eliseu manda Naamã mergulhar sete vezes no Jordão; Naamã resiste com orgulho mas é convencido pelos servos e é curado. Ele oferece presentes; Eliseu recusa. Geazi, servo de Eliseu, corre após Naamã, mente e pega presentes por conta própria, recebendo a lepra de Naamã como punição.';
+        } else if (temaLower.includes('2 reis 6') || temaLower.includes('2reis6') || temaLower.includes('ii reis 6')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: 2 Reis 6 contém dois episódios: (1) o machado que flutua no rio Jordão quando Eliseu lança um pau no lugar onde ele caiu; (2) Eliseu revela ao rei de Israel os planos secretos do rei da Síria, que então cerca a cidade de Dotã para capturar Eliseu. Eliseu ora para que o servo veja os cavalos e carros de fogo ao redor deles. Os sírios são enceguecidos e conduzidos a Samaria. NÃO confundir com 2 Reis 7 (os leprosos e a fuga dos sírios).';
+        } else if (temaLower.includes('2 reis 7') || temaLower.includes('2reis7') || temaLower.includes('ii reis 7')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: 2 Reis 7 trata EXCLUSIVAMENTE do cerco sírio a Samaria e dos quatro leprosos. Os eventos são: (1) fome grave em Samaria sitiada pelos sírios — cabeça de asno e excremento de pomba eram vendidos a preços absurdos; (2) Eliseu profetiza que no dia seguinte haveria fartura de alimentos em Samaria; (3) um oficial do rei duvida e Eliseu profetiza que ele veria mas não comeria; (4) os QUATRO LEPROSOS na porta da cidade decidem ir ao arraial dos sírios pois de todo modo morreriam de fome; (5) chegando ao arraial, encontram-no completamente abandonado — tendas, cavalos, jumentos e provisões — pois o Senhor tinha feito os sírios ouvirem um grande estrondo de exército e fugiram em pânico deixando tudo para trás; (6) os leprosos comem, saqueiam e depois avisam o rei; (7) o povo saqueia o arraial e a fartura se cumpre; (8) o oficial que duvidou é pisoteado pela multidão na porta e morre, cumprindo a profecia de Eliseu. NÃO misturar com 2 Reis 4 (milagres de Eliseu), 2 Reis 5 (Naamã) ou 2 Reis 6 (machado e enceguecimento).';
+        }
+        // João
+        else if (temaLower.includes('joao 3') || temaLower.includes('jo 3') || temaLower.includes('jao 3')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: João 3 narra a visita de Nicodemos, fariseu e líder judeu, a Jesus à noite. Jesus ensina sobre o novo nascimento — é preciso nascer de água e do Espírito para entrar no Reino de Deus. Inclui João 3:16 ("Porque Deus amou o mundo de tal maneira..."). O capítulo também registra a continuação do ministério de João Batista e sua declaração de que ele deve diminuir e Jesus crescer.';
+        } else if (temaLower.includes('joao 11') || temaLower.includes('jo 11')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: João 11 narra a morte e ressurreição de Lázaro de Betânia, amigo de Jesus. Lázaro adoece; Jesus demora dois dias antes de partir. Quando chega, Lázaro está morto há quatro dias. Marta e Maria recebem Jesus com fé misturada a tristeza. Jesus chora (versículo mais curto da Bíblia). Jesus ora ao Pai e chama Lázaro que sai do túmulo ainda envolto em faixas. Este milagre leva os líderes religiosos a planejarem matar Jesus.';
+        }
+        // Romanos
+        else if (temaLower.includes('romanos 8') || temaLower.includes('rm 8') || temaLower.includes('rom 8')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: Romanos 8 é o capítulo da vida no Espírito. Temas centrais: nenhuma condenação para os que estão em Cristo Jesus; a lei do Espírito de vida libertou da lei do pecado e da morte; o Espírito nos adota como filhos e nos faz clamar "Aba, Pai"; o sofrimento presente não se compara à glória vindoura; a criação aguarda em gemidos a revelação dos filhos de Deus; o Espírito intercede por nós; todas as coisas cooperam para o bem dos que amam a Deus (v.28); predestinação, justificação, glorificação; nada nos separará do amor de Deus em Cristo Jesus.';
+        } else if (temaLower.includes('romanos 12') || temaLower.includes('rm 12') || temaLower.includes('rom 12')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: Romanos 12 trata da vida cristã prática: oferecer o corpo como sacrifício vivo; não se conformar com este século mas transformar-se pela renovação da mente; humildade e uso dos dons segundo a graça; amor sem fingimento; aborrecer o mal; ser fervoroso no espírito; vencer o mal com o bem; não vingar-se mas deixar lugar à ira de Deus.';
+        }
+        // Filipenses
+        else if (temaLower.includes('filipenses 4') || temaLower.includes('fp 4') || temaLower.includes('fil 4')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: Filipenses 4 contém exortações finais de Paulo da prisão: alegria constante ("Regozijai-vos sempre no Senhor"); moderação conhecida por todos; não ansiar por nada mas em tudo com oração e ação de graças apresentar pedidos a Deus; a paz de Deus que excede todo entendimento; pensar no que é verdadeiro, honesto, justo, puro, amável; aprender a contentar-se em qualquer estado; "tudo posso naquele que me fortalece" (v.13); a generosidade dos filipenses supriu as necessidades de Paulo.';
+        }
+        // Isaías
+        else if (temaLower.includes('isaias 40') || temaLower.includes('is 40') || temaLower.includes('isa 40')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: Isaías 40 abre o chamado "Segundo Isaías" com palavras de consolo a Israel no exílio. Temas: "Consolai, consolai o meu povo"; a voz que clama no deserto (preparar o caminho do Senhor); a fragilidade humana comparada à relva que seca; a soberania e grandeza de Deus que pesa as montanhas e conta as estrelas; os que esperam no Senhor renovam as forças, sobem com asas como águias, correm e não se cansam.';
+        }
+        // Mateus
+        else if (temaLower.includes('mateus 5') || temaLower.includes('mt 5')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: Mateus 5 abre o Sermão do Monte. Contém as Bem-aventuranças (pobres de espírito, os que choram, os mansos, os que têm fome de justiça, os misericordiosos, os puros de coração, os pacificadores, os perseguidos por justiça). Também: sal da terra e luz do mundo; Jesus não veio abolir a Lei mas cumpri-la; sobre homicídio, adultério, divórcio, juramentos, retaliar o mal e amar os inimigos.';
+        } else if (temaLower.includes('mateus 6') || temaLower.includes('mt 6')) {
+            contextoBiblico = 'CONTEXTO HISTÓRICO REAL: Mateus 6 continua o Sermão do Monte. Temas: dar esmolas em segredo; orar em segredo (e o Pai Nosso como modelo de oração); jejuar em segredo; não acumular tesouros na terra mas no céu; a lâmpada do corpo é o olho; não se pode servir a dois senhores (Deus e mamom); não se preocupar com comida ou roupa pois Deus cuida dos pássaros e das flores; buscar primeiro o Reino de Deus e a sua justiça.';
+        }
+        // ── FIM DO MAPEAMENTO ─────────────────────────────────────────────────
+
+        const instrucao = `DIRETRIZ CRÍTICA DE PRECISÃO BÍBLICA: Você está TERMINANTEMENTE PROIBIDO de inventar versículos, misturar capítulos, criar personagens fictícios ou atribuir milagres/eventos a capítulos onde eles não ocorrem. Use APENAS os fatos que existem no capítulo exato citado pelo usuário. Nunca invente citações entre aspas que não sejam bíblicas. Nunca funda eventos de capítulos diferentes.
+
+${contextoBiblico ? contextoBiblico + '\n\nATENÇÃO ABSOLUTA: Baseie-se ESTRITAMENTE no contexto histórico real fornecido acima. Não invente milagres, personagens ou eventos de outros capítulos. Se o contexto acima descreve 2 Reis 7, use APENAS os eventos de 2 Reis 7.\n' : ''}
 Você é um pregador cristão experiente e ungido, adaptando perfeitamente uma fusão equilibrada baseada nas seguintes referências e estilos homiléticos: ${stringEstilos}.
 Escreva um sermão completo e poderoso sobre o tema: "${tema}".
 O sermão deve ser assinado por ${MEU_NOME} (não mencione explicitamente o nome de nenhuma das referências citadas no corpo do texto final).
@@ -596,8 +652,14 @@ Escreva em português brasileiro de forma fluida.`;
                             },
                             body: JSON.stringify({
                                 model: modelo.id,
-                                messages: [{ role: 'user', content: instrucao }],
-                                temperature: 0.3,
+                                messages: [
+                                    {
+                                        role: 'system',
+                                        content: 'Você é um pastor evangélico estudioso e fiel à Bíblia. Sua regra mais importante é: NUNCA invente eventos, personagens ou milagres. NUNCA misture capítulos ou livros diferentes. Se um contexto histórico for fornecido no prompt do usuário, siga-o com fidelidade absoluta, sem adicionar nada que não esteja descrito naquele contexto. Responda SEMPRE em português do Brasil.'
+                                    },
+                                    { role: 'user', content: instrucao }
+                                ],
+                                temperature: 0.2,
                                 max_tokens: 4096
                             })
                         });
