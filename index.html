@@ -466,33 +466,26 @@ ${estruturaRequerida}
 
 Escreva em português brasileiro de forma fluida.`;
 
-        const MODELOS = [
-            { id: 'gemini-2.5-flash',               label: 'Gemini 2.5 Flash' },
-            { id: 'gemini-2.0-flash',               label: 'Gemini 2.0 Flash' },
-            { id: 'gemini-1.5-pro',                 label: 'Gemini 1.5 Pro' }
-        ];
-
-        const delay = ms => new Promise(r => setTimeout(r, ms));
+        const MODELO_ID    = 'gemini-2.0-flash';
+        const MODELO_LABEL = 'Gemini 2.0 Flash';
         let textoFinal = null;
         let modeloUsado = '';
 
-        for (let m = 0; m < MODELOS.length; m++) {
-            const { id: modelo, label: modeloLabel } = MODELOS[m];
-            try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${MINHA_CHAVE}`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: instrucao }] }] })
-                });
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODELO_ID}:generateContent?key=${MINHA_CHAVE}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: instrucao }] }] })
+            });
 
-                const data = await response.json();
-                if (data.error) continue;
-
-                textoFinal = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (textoFinal) { modeloUsado = modeloLabel; break; }
-            } catch (e) {}
-            await delay(1000);
+            const data = await response.json();
+            if (!data.error) {
+                textoFinal = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+                if (textoFinal) modeloUsado = MODELO_LABEL;
+            }
+        } catch (e) {
+            console.error("Erro na requisição Gemini:", e);
         }
 
         btn.disabled = false;
