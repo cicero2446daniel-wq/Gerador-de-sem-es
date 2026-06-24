@@ -535,7 +535,9 @@
 **Pregador: ${MEU_NOME}**`;
         }
 
-        const instrucao = `Você é um pregador cristão experiente e ungido, adaptando perfeitamente uma fusão equilibrada baseada nas seguintes referências e estilos homiléticos: ${stringEstilos}.
+        const instrucao = `DIRETRIZ CRÍTICA DE PRECISÃO BÍBLICA: Você está proibido de inventar versículos, inventar números de pessoas ou criar fatos que não existam na Bíblia Sagrada. Se você não tiver certeza absoluta do contexto exato do capítulo solicitado pelo usuário, use apenas as verdades gerais do livro bíblico citado ou baseie-se estritamente nas palavras informadas no tema. Nunca invente citações entre aspas que não sejam bíblicas.
+
+Você é um pregador cristão experiente e ungido, adaptando perfeitamente uma fusão equilibrada baseada nas seguintes referências e estilos homiléticos: ${stringEstilos}.
 Escreva um sermão completo e poderoso sobre o tema: "${tema}".
 O sermão deve ser assinado por ${MEU_NOME} (não mencione explicitamente o nome de nenhuma das referências citadas no corpo do texto final).
 
@@ -595,7 +597,7 @@ Escreva em português brasileiro de forma fluida.`;
                             body: JSON.stringify({
                                 model: modelo.id,
                                 messages: [{ role: 'user', content: instrucao }],
-                                temperature: 0.8,
+                                temperature: 0.3,
                                 max_tokens: 4096
                             })
                         });
