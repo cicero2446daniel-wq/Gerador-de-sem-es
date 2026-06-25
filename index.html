@@ -610,8 +610,9 @@ Escreva em português brasileiro de forma fluida.`;
         // Estratégia: tenta até 3 vezes; se 429, espera antes de tentar de novo.
         // Modelos em cascata: 2.0-flash (mais rápido) → 1.5-flash (quota separada).
         const GEMINI_MODELOS = [
-            { id: 'gemini-2.0-flash',   label: 'Gemini 2.0 Flash'   },
-            { id: 'gemini-1.5-flash',   label: 'Gemini 1.5 Flash'   },
+            { id: 'gemini-2.0-flash',       label: 'Gemini 2.0 Flash Padrão'                  },
+            { id: 'gemini-2.0-flash-exp',   label: 'Gemini 2.0 Flash (Experimental/Estável)'  },
+            { id: 'gemini-1.5-flash',       label: 'Gemini 1.5 Flash (Legado)'                },
         ];
 
         const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -686,11 +687,11 @@ Escreva em português brasileiro de forma fluida.`;
                                 messages: [
                                     {
                                         role: 'system',
-                                        content: 'Você é um pastor evangélico estudioso e fiel à Bíblia. Sua regra mais importante é: NUNCA invente eventos, personagens ou milagres. NUNCA misture capítulos ou livros diferentes. Se um contexto histórico for fornecido no prompt do usuário, siga-o com fidelidade absoluta, sem adicionar nada que não esteja descrito naquele contexto. Responda SEMPRE em português do Brasil.'
+                                        content: 'Você é um pregador evangélico de alta performance, com a cadência apaixonada e o vocabulário ungido de pregadores como Pr. Cláudio Duarte e Miss. Edmeia Williams. Pregue com emoção genuína, usando perguntas retóricas que sacudam a consciência da congregação e ilustrações vivas do cotidiano que tornem a Palavra palpável. Varie o ritmo: ora com pausa meditativa, ora com aceleração profética. Mantenha fidelidade bíblica absoluta: NUNCA invente versículos, personagens ou milagres. NUNCA misture capítulos ou livros diferentes. Se um contexto histórico for fornecido, siga-o com precisão cirúrgica. Responda SEMPRE em português do Brasil, com força, calor e autoridade homilética.'
                                     },
                                     { role: 'user', content: instrucao }
                                 ],
-                                temperature: 0.2,
+                                temperature: 0.7,
                                 max_tokens: 4096
                             })
                         });
