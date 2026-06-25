@@ -601,7 +601,7 @@ ${estruturaRequerida}
 
 Escreva em português brasileiro de forma fluida.`;
 
-        const MODELO_LABEL = 'Gemini 2.0 Flash';
+        const MODELO_LABEL = 'Gemini 2.5 Flash';
         let textoFinal = null;
         let modeloUsado = '';
         let usouFallback = false;
@@ -610,9 +610,8 @@ Escreva em português brasileiro de forma fluida.`;
         // Estratégia: tenta até 3 vezes; se 429, espera antes de tentar de novo.
         // Modelos em cascata: 2.0-flash (mais rápido) → 1.5-flash (quota separada).
         const GEMINI_MODELOS = [
-            { id: 'gemini-2.0-flash',       label: 'Gemini 2.0 Flash Padrão'                  },
-            { id: 'gemini-2.0-flash-exp',   label: 'Gemini 2.0 Flash (Experimental/Estável)'  },
-            { id: 'gemini-1.5-flash',       label: 'Gemini 1.5 Flash (Legado)'                },
+            { id: 'gemini-2.5-flash',      label: 'Gemini 2.5 Flash'      },
+            { id: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite' },
         ];
 
         const sleep = ms => new Promise(r => setTimeout(r, ms));
