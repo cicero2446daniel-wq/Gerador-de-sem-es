@@ -195,6 +195,31 @@
                                     </label>
                                 </div>
                             </div>
+
+                            <!-- NOVO RECURSO: Modo Batalha Espiritual (Libertação / Cura Interior) -->
+                            <div class="bg-dark-surface p-4 rounded-xl border border-dark-border">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-gold">shield</span>
+                                        <div>
+                                            <p class="text-xs font-bold uppercase text-gray-300 tracking-wider">Modo Batalha Espiritual</p>
+                                            <p id="label-batalha" class="text-[11px] text-gray-500">Libertação, cura interior e quebra de vínculos</p>
+                                        </div>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer select-none">
+                                        <input type="checkbox" id="modo-batalha-toggle" onchange="toggleModoBatalha(this)" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-dark-bg border border-dark-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-gray-500 peer-checked:after:bg-gold after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gold/10 peer-checked:border-gold/50"></div>
+                                    </label>
+                                </div>
+                                <div id="container-abordagem-batalha" class="hidden mt-3 pt-3 border-t border-dark-border">
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">Abordagem de Guerra</label>
+                                    <select id="abordagem-batalha-select" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-xs focus:border-gold focus:ring-1 focus:ring-gold/30 focus:outline-none">
+                                        <option value="Clínica">Clínica (acolhedora, pastoral)</option>
+                                        <option value="Confrontativa">Confrontativa (direta, autoridade)</option>
+                                        <option value="Expositiva">Expositiva (didática, bíblica)</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                         
                         <button id="btn-main" onclick="gerarSermao()" class="gold-gradient w-full py-4 rounded-xl text-dark-bg font-extrabold text-lg uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-transform flex items-center justify-center gap-3">
@@ -366,13 +391,28 @@
     // ── CONSTANTES E ESTADOS ──
     const MEU_NOME    = "Cicero Daniel";
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbwodI-fHJpXAUQknpHb4oSkfxVpxW_7715DiQey6BAPTrSUOAq9W0fFtTTR7stnEKFP/exec";
-    const NOMES_PROIBIDOS = ["Pr. Cláudio Duarte","Cláudio Duarte","Isaias de Oliveira","Hernandes Dias Lopes","Edmeia Williams","Matheus Zandona","Juliano Fraga","Billy Graham","Marcelo M. Guimarães","Marcelo Guimarães","Oziel Gomes"];
+    const NOMES_PROIBIDOS = ["Pr. Cláudio Duarte","Cláudio Duarte","Isaias de Oliveira","Hernandes Dias Lopes","Edmeia Williams","Matheus Zandona","Juliano Fraga","Billy Graham","Marcelo M. Guimarães","Marcelo Guimarães","Oziel Gomes","Neuza Itioka","Dra. Neuza Itioka","Tânia Tereza","Pra. Tânia Tereza","Jorge Linhares","Francis Frangipane"];
     const LISTA_ESTILOS_DISPONIVEIS = [
         "Pr. Cláudio Duarte", "Pr. Hernandes Dias Lopes", "Pr. Isaias de Oliveira",
         "Miss. Edmeia Williams", "Pr. Matheus Zandona", "Pr. Juliano Fraga",
         "Ev. Billy Graham", "Pr. Marcelo M. Guimarães", "Pr. Oziel Gomes"
     ];
     let MINHA_CHAVE = localStorage.getItem('sermoespro_key') || "";
+
+    // ── MODO BATALHA ESPIRITUAL (Libertação / Cura Interior) ──
+    const PROMPT_BATALHA_ESPIRITUAL = `
+[CONTEXTO: MODELO DE BATALHA ESPIRITUAL, LIBERTAÇÃO E CURA INTERIOR]
+Atue como um Pastor especialista em Libertação, Cura Interior e Quebra de Vínculos. Escreva o sermão com base no tema enviado, sempre assinado por ${MEU_NOME} ao final. Não mencione o nome de nenhum pregador ou referência específica no corpo do texto.
+[DIRETRIZES OBRIGATÓRIAS DE ESTRUTURA]
+Gere o sermão dividindo estritamente com os seguintes títulos em negrito (markdown **):
+**INTRODUÇÃO E BASE BÍBLICA:**
+**O DIAGNÓSTICO – O INIMIGO REAL:**
+**A BRECHA – A LEGALIDADE:**
+**A SOLUÇÃO – O CANCELAMENTO DO DECRETO:**
+**CLÍMAX – ORAÇÃO DE COMANDO E MINISTRAÇÃO:**
+[DICIONÁRIO DE TERMOS OBRIGATÓRIOS]
+Integre de forma totalmente natural no texto os termos: "legalidade espiritual", "brechas abertas", "fortalezas mentais", "jugo desigual", "total libertação", "quebrar o decreto".
+`;
 
     function inicializarApp() {
         renderizarListaEstilos();
@@ -387,6 +427,18 @@
             lbl.className = "text-[11px] text-gold font-medium";
         } else {
             lbl.innerText = "Modo Devocional (10-15 min)";
+            lbl.className = "text-[11px] text-gray-500";
+        }
+    }
+
+    function toggleModoBatalha(toggle) {
+        const container = document.getElementById('container-abordagem-batalha');
+        const lbl = document.getElementById('label-batalha');
+        if (toggle.checked) {
+            container.classList.remove('hidden');
+            lbl.className = "text-[11px] text-gold font-medium";
+        } else {
+            container.classList.add('hidden');
             lbl.className = "text-[11px] text-gray-500";
         }
     }
@@ -500,6 +552,8 @@
         const display    = document.getElementById('roteiro');
         const btn        = document.getElementById('btn-main');
         const modoIgreja = document.getElementById('modo-igreja-toggle').checked;
+        const modoBatalha = document.getElementById('modo-batalha-toggle').checked;
+        const abordagemBatalha = document.getElementById('abordagem-batalha-select').value;
 
         if (!MINHA_CHAVE) { alert("Configure sua chave API primeiro!"); toggleConfig(); return; }
         if (!tema)         { alert("Insira um tema ou versículo!"); return; }
@@ -590,13 +644,21 @@
         }
         // ── FIM DO MAPEAMENTO ─────────────────────────────────────────────────
 
+        // ── Bloco condicional do Modo Batalha Espiritual ──
+        const blocoBatalha = modoBatalha
+            ? `${PROMPT_BATALHA_ESPIRITUAL}
+[ABORDAGEM DE GUERRA OBRIGATÓRIA]: Adote estritamente a ABORDAGEM ${abordagemBatalha.toUpperCase()}.
+[DIRETRIZ DE ESTRUTURA FINAL]: Para este sermão, IGNORE a estrutura de TÍTULO/PONTOS abaixo e siga EXCLUSIVAMENTE a estrutura de 5 títulos do Modo Batalha Espiritual acima (INTRODUÇÃO E BASE BÍBLICA / O DIAGNÓSTICO / A BRECHA / A SOLUÇÃO / CLÍMAX). Ajuste apenas a profundidade e extensão dos parágrafos conforme a diretriz de tempo abaixo.
+`
+            : '';
+
         const instrucao = `DIRETRIZ CRÍTICA DE PRECISÃO BÍBLICA: Você está TERMINANTEMENTE PROIBIDO de inventar versículos, misturar capítulos, criar personagens fictícios ou atribuir milagres/eventos a capítulos onde eles não ocorrem. Use APENAS os fatos que existem no capítulo exato citado pelo usuário. Nunca invente citações entre aspas que não sejam bíblicas. Nunca funda eventos de capítulos diferentes.
 
 ${contextoBiblico ? contextoBiblico + '\n\nATENÇÃO ABSOLUTA: Baseie-se ESTRITAMENTE no contexto histórico real fornecido acima. Não invente milagres, personagens ou eventos de outros capítulos. Se o contexto acima descreve 2 Reis 7, use APENAS os eventos de 2 Reis 7.\n' : ''}
 Você é um pregador cristão experiente e ungido, adaptando perfeitamente uma fusão equilibrada baseada nas seguintes referências e estilos homiléticos: ${stringEstilos}.
 Escreva um sermão completo e poderoso sobre o tema: "${tema}".
 O sermão deve ser assinado por ${MEU_NOME} (não mencione explicitamente o nome de nenhuma das referências citadas no corpo do texto final).
-
+${blocoBatalha}
 ${estruturaRequerida}
 
 Escreva em português brasileiro de forma fluida.`;
@@ -740,7 +802,7 @@ Escreva em português brasileiro de forma fluida.`;
         display.innerHTML = `
             <div class="mb-6" contenteditable="false">
                 <h2 class="text-2xl font-bold text-gold uppercase mb-2">${tema}</h2>
-                <p class="text-sm text-gray-400 uppercase">Pregador: ${MEU_NOME} | Duração: ${modoIgreja ? 'Igreja (~30 min)' : 'Devocional (10-15 min)'}</p>
+                <p class="text-sm text-gray-400 uppercase">Pregador: ${MEU_NOME} | Duração: ${modoIgreja ? 'Igreja (~30 min)' : 'Devocional (10-15 min)'}${modoBatalha ? ` | <span class="text-gold">Batalha Espiritual · ${abordagemBatalha}</span>` : ''}</p>
                 <p class="text-xs mt-2 font-mono flex items-center gap-1.5 ${usouFallback ? 'text-blue-500' : 'text-gray-700'}">
                     <span class="material-symbols-outlined text-xs">${usouFallback ? 'shield' : 'auto_awesome'}</span>
                     Estrutura homilética montada via ${modeloUsado}
