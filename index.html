@@ -827,12 +827,15 @@ Escreva em português brasileiro de forma fluida.`;
         const div = document.getElementById('lista-historico');
         const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
         div.innerHTML = h.map((item, idx) => `
-            <div onclick="verHistoricoLocal(${idx})" class="p-4 hover:bg-dark-surface cursor-pointer transition-all group flex justify-between items-center">
-                <div>
+            <div onclick="verHistoricoLocal(${idx})" class="p-4 hover:bg-dark-surface cursor-pointer transition-all group flex justify-between items-center gap-3">
+                <div class="flex-1">
                     <p class="text-sm font-bold group-hover:text-gold transition-colors">${item.titulo}</p>
                     <p class="text-[10px] text-gray-500 uppercase">${item.data}</p>
                 </div>
-                <span class="material-symbols-outlined text-gray-700 group-hover:text-gold">arrow_forward_ios</span>
+                <div class="flex items-center gap-2">
+                    <button onclick="event.stopPropagation(); deletarSermaoLocal(${idx})" class="bg-red-900/30 text-red-500 p-1 rounded hover:bg-red-900/50"><span class="material-symbols-outlined text-sm">delete</span></button>
+                    <span class="material-symbols-outlined text-gray-700 group-hover:text-gold">arrow_forward_ios</span>
+                </div>
             </div>
         `).join('') || '<p class="p-4 text-center text-gray-600 text-xs">Nenhum registro local.</p>';
     }
@@ -841,6 +844,14 @@ Escreva em português brasileiro de forma fluida.`;
         const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
         document.getElementById('roteiro').innerHTML = h[i].conteudo;
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deletarSermaoLocal(idx) {
+        if (!confirm("Deseja realmente excluir este sermão do histórico local?")) return;
+        const h = JSON.parse(localStorage.getItem('hist_sermoes_v3') || '[]');
+        h.splice(idx, 1);
+        localStorage.setItem('hist_sermoes_v3', JSON.stringify(h));
+        atualizarInterfaceHistorico();
     }
 
     function limparHistoricoLocal() {
